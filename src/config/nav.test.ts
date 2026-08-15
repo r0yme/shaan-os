@@ -38,6 +38,7 @@ describe("filterNavForUser", () => {
       "invoices.view",
       "reports.view",
       "audit.view",
+      "search.global",
       "settings.manage",
     ]);
     expect(labels(user)).toEqual(all);
@@ -144,5 +145,13 @@ describe("filterNavForUser", () => {
 
     const withAudit = makeUser(["audit.view"]);
     expect(labels(withAudit)).toContain("Audit");
+  });
+
+  it("shows search only with the search.global permission", () => {
+    const noSearch = makeUser(["tasks.view"]);
+    expect(labels(noSearch)).not.toContain("Search");
+
+    const withSearch = makeUser(["search.global"]);
+    expect(labels(withSearch)).toContain("Search");
   });
 });

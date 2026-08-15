@@ -7,6 +7,7 @@ import {
   Menu,
   X,
   LayoutDashboard,
+  Search,
   Users,
   Radar,
   ContactRound,
@@ -35,6 +36,7 @@ import { NotificationBell } from "@/components/notifications/notification-bell";
 
 const NAV_ICONS = {
   dashboard: LayoutDashboard,
+  search: Search,
   clients: Users,
   leads: Radar,
   employees: ContactRound,
