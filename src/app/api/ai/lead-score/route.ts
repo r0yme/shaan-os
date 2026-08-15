@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
-import { generateObject, jsonSchema } from "ai";
+import { generateObject, NoObjectGeneratedError, TypeValidationError, zodSchema } from "ai";
 import { requirePermission } from "@/lib/session";
 import { aiEnabled, getModel, leadScoreOutputSchema } from "@/lib/ai";
 import { loadAiContext } from "@/lib/ai-context";
 import { rateLimit } from "@/lib/rate-limit";
-import { parseWithZod, aiLeadScoreSchema } from "@/lib/validation";
+import {
+  parseWithZod,
+  aiLeadScoreSchema,
+  leadScoreResultSchema,
+  type LeadScoreResult,
+} from "@/lib/validation";
 import { ForbiddenError, NotFoundError, UnauthorizedError, ValidationError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 
@@ -32,20 +37,8 @@ export async function POST(request: Request) {
     }
 
     const context = await loadAiContext("lead", data.leadId);
-    const model = getModel();
-    const result = await generateObject({
-      model,
-      schema: jsonSchema({
-        type: "object",
-        properties: leadScoreOutputSchema,
-        required: ["score", "summary", "strengths", "risks", "nextSteps"],
-        additionalProperties: false,
-      }),
-      system: buildScoreSystemPrompt(),
-      prompt: context,
-    });
-
-    return NextResponse.json(result.object);
+    const score = await generateLeadScore(context);
+    return NextResponse.json(score);
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -60,13 +53,49 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
     logger.error({ err: error }, "AI lead score request failed");
-    return NextResponse.json({ error: "The AI request failed. Please try again." }, { status: 500 });
+    return NextResponse.json(
+      { error: "The AI model could not produce a valid lead score. Please try again." },
+      { status: 502 },
+    );
   }
+}
+
+async function generateLeadScore(context: string): Promise<LeadScoreResult> {
+  const model = getModel();
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const result = await generateObject({
+        model,
+        schema: zodSchema(leadScoreResultSchema),
+        system:
+          buildScoreSystemPrompt() +
+          (attempt > 1
+            ? "\nReturn ONLY a JSON object with exactly these keys: score, summary, strengths, risks, nextSteps."
+            : ""),
+        prompt: context,
+      });
+      const parsed = leadScoreResultSchema.safeParse(result.object);
+      if (parsed.success) return parsed.data;
+      logger.warn({ attempt, value: result.object }, "Lead score output failed validation");
+    } catch (error) {
+      if (
+        error instanceof NoObjectGeneratedError ||
+        error instanceof TypeValidationError
+      ) {
+        logger.warn({ attempt, err: error }, "Lead score generation failed validation");
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error("Model returned an invalid lead score twice.");
 }
 
 function buildScoreSystemPrompt(): string {
   return (
     "You are a senior sales qualification analyst. Score the lead 0-100 based on fit, " +
-    "urgency, budget signal and next-step likelihood. Return only the requested JSON shape."
+    "urgency, budget signal and next-step likelihood. Return a JSON object with: " +
+    `score (0-100 integer), summary, strengths (array), risks (array), nextSteps (array). ` +
+    `Schema: ${JSON.stringify(leadScoreOutputSchema)}`
   );
 }

@@ -26,6 +26,7 @@ import {
   sharedFileMetadataSchema,
   contractorSchema,
   businessProfileSchema,
+  leadScoreResultSchema,
 } from "@/lib/validation";
 import { ValidationError } from "@/lib/errors";
 
@@ -802,5 +803,50 @@ describe("businessProfileSchema", () => {
 
   it("rejects an overlong invoice prefix", () => {
     expect(businessProfileSchema.safeParse({ invoicePrefix: "ABCDEFGHIJK" }).success).toBe(false);
+  });
+});
+
+describe("leadScoreResultSchema", () => {
+  it("accepts a complete score object", () => {
+    const result = leadScoreResultSchema.safeParse({
+      score: 72,
+      summary: "Promising inbound lead.",
+      strengths: ["High intent"],
+      risks: [],
+      nextSteps: ["Send discovery email"],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a score outside 0-100", () => {
+    const result = leadScoreResultSchema.safeParse({
+      score: 150,
+      summary: "Promising inbound lead.",
+      strengths: [],
+      risks: [],
+      nextSteps: [],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a non-integer score", () => {
+    const result = leadScoreResultSchema.safeParse({
+      score: 72.5,
+      summary: "Promising inbound lead.",
+      strengths: [],
+      risks: [],
+      nextSteps: [],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a missing required key", () => {
+    const result = leadScoreResultSchema.safeParse({
+      score: 72,
+      summary: "Promising inbound lead.",
+      strengths: ["High intent"],
+      risks: [],
+    });
+    expect(result.success).toBe(false);
   });
 });

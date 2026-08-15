@@ -414,3 +414,13 @@ export const aiChatSchema = z.object({
 export const aiLeadScoreSchema = z.object({
   leadId: idSchema,
 });
+
+export const leadScoreResultSchema = z.object({
+  score: z.number().int().min(0).max(100),
+  summary: z.string().min(1),
+  strengths: z.array(z.string()).max(12),
+  risks: z.array(z.string()).max(12),
+  nextSteps: z.array(z.string()).max(12),
+});
+
+export type LeadScoreResult = z.infer<typeof leadScoreResultSchema>;
