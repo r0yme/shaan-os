@@ -18,6 +18,9 @@ import {
   taskSchema,
   updateEmployeeSchema,
   userStatusSchema,
+  requestApprovalSchema,
+  decideApprovalSchema,
+  cancelApprovalSchema,
 } from "@/lib/validation";
 import { ValidationError } from "@/lib/errors";
 
@@ -512,5 +515,58 @@ describe("conversationSchema", () => {
     expect(
       conversationSchema.safeParse({ clientId: "c", subject: "x".repeat(121), body: "Hi" }).success,
     ).toBe(false);
+  });
+});
+
+describe("requestApprovalSchema", () => {
+  it("parses a valid request", () => {
+    const result = requestApprovalSchema.parse({
+      type: "EXPENSE",
+      entityId: "cm-expense",
+    });
+    expect(result.type).toBe("EXPENSE");
+    expect(result.entityId).toBe("cm-expense");
+    expect(result.comment).toBeNull();
+  });
+
+  it("normalizes empty and over-long comments", () => {
+    expect(
+      requestApprovalSchema.parse({ type: "INVOICE", entityId: "cm-inv", comment: "  " }).comment,
+    ).toBeNull();
+    expect(
+      requestApprovalSchema.safeParse({
+        type: "INVOICE",
+        entityId: "cm-inv",
+        comment: "x".repeat(1001),
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an unknown type or missing entity", () => {
+    expect(requestApprovalSchema.safeParse({ type: "PAYROLL", entityId: "x" }).success).toBe(false);
+    expect(requestApprovalSchema.safeParse({ type: "EXPENSE" }).success).toBe(false);
+  });
+});
+
+describe("decideApprovalSchema", () => {
+  it("parses a valid decision", () => {
+    const result = decideApprovalSchema.parse({ id: "cm-approval", decision: "REJECTED" });
+    expect(result.decision).toBe("REJECTED");
+  });
+
+  it("rejects an invalid decision", () => {
+    expect(
+      decideApprovalSchema.safeParse({ id: "cm-approval", decision: "PENDING" }).success,
+    ).toBe(false);
+  });
+});
+
+describe("cancelApprovalSchema", () => {
+  it("parses a valid cancel payload", () => {
+    expect(cancelApprovalSchema.parse({ id: "cm-approval" }).id).toBe("cm-approval");
+  });
+
+  it("rejects a missing id", () => {
+    expect(cancelApprovalSchema.safeParse({}).success).toBe(false);
   });
 });

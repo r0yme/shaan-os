@@ -282,6 +282,33 @@ export const conversationSchema = z.object({
   body: messageBodySchema,
 });
 
+export const approvalTypeSchema = z.enum(["INVOICE", "EXPENSE", "MILESTONE"]);
+
+export const approvalDecisionSchema = z.enum(["APPROVED", "REJECTED"]);
+
+const approvalCommentSchema = z
+  .string()
+  .trim()
+  .max(1000, "Comment must be at most 1000 characters.")
+  .optional()
+  .transform((value) => (value === undefined || value === "" ? null : value));
+
+export const requestApprovalSchema = z.object({
+  type: approvalTypeSchema,
+  entityId: idSchema,
+  comment: approvalCommentSchema,
+});
+
+export const decideApprovalSchema = z.object({
+  id: idSchema,
+  decision: approvalDecisionSchema,
+  comment: approvalCommentSchema,
+});
+
+export const cancelApprovalSchema = z.object({
+  id: idSchema,
+});
+
 export function parseWithZod<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
   if (!result.success) {

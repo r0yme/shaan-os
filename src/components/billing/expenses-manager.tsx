@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
+import { BadgeCheck, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
@@ -11,12 +11,14 @@ import { DataTable } from "@/components/ui/data-table";
 import { DropdownMenu } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ExpenseCategoryBadge } from "@/components/billing/status-badges";
+import { ApprovalStatusBadge } from "@/components/approvals/status-badges";
 import {
   ExpenseFormModal,
   type ExpenseFormValue,
   type RefOption,
 } from "@/components/billing/expense-form-modal";
 import { deleteExpenseAction } from "@/app/(portal)/billing/expenses/actions";
+import { requestApprovalAction } from "@/app/(portal)/approvals/actions";
 
 export interface SerializedExpense {
   id: string;
@@ -30,6 +32,7 @@ export interface SerializedExpense {
   clientId: string | null;
   clientName: string | null;
   recordedByName: string | null;
+  approvalStatus: string | null;
   createdAt: string;
 }
 
@@ -69,6 +72,7 @@ export function ExpensesManager({
   canCreate,
   canEdit,
   canDelete,
+  canRequestApproval,
 }: {
   expenses: SerializedExpense[];
   categoryFilter: string;
@@ -81,6 +85,7 @@ export function ExpensesManager({
   canCreate: boolean;
   canEdit: boolean;
   canDelete: boolean;
+  canRequestApproval: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -90,6 +95,7 @@ export function ExpensesManager({
   const [editing, setEditing] = useState<ExpenseFormValue | null>(null);
   const [deleting, setDeleting] = useState<SerializedExpense | null>(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -115,6 +121,18 @@ export function ExpensesManager({
     if (result.ok) {
       setDeleting(null);
       router.refresh();
+    }
+  }
+
+  async function requestApproval(expense: SerializedExpense) {
+    setBusy(true);
+    setError(null);
+    const result = await requestApprovalAction({ type: "EXPENSE", entityId: expense.id });
+    setBusy(false);
+    if (result.ok) {
+      router.refresh();
+    } else {
+      setError(result.error);
     }
   }
 
@@ -159,6 +177,12 @@ export function ExpensesManager({
           </Button>
         )}
       </div>
+
+      {error && (
+        <p className="mb-4 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      )}
 
       <DataTable<SerializedExpense>
         columns={[
@@ -207,6 +231,16 @@ export function ExpensesManager({
             ),
           },
           {
+            key: "approval",
+            header: "Approval",
+            cell: (expense) =>
+              expense.approvalStatus ? (
+                <ApprovalStatusBadge status={expense.approvalStatus} />
+              ) : (
+                <span className="text-muted-foreground">—</span>
+              ),
+          },
+          {
             key: "amount",
             header: "Amount",
             className: "text-right",
@@ -225,6 +259,15 @@ export function ExpensesManager({
                 label={`Actions for expense`}
                 trigger={<span className="font-semibold">···</span>}
                 items={[
+                  ...(canRequestApproval && !expense.approvalStatus
+                    ? [
+                        {
+                          label: "Request approval",
+                          icon: <BadgeCheck className="h-4 w-4" />,
+                          onSelect: () => requestApproval(expense),
+                        },
+                      ]
+                    : []),
                   ...(canEdit
                     ? [
                         {

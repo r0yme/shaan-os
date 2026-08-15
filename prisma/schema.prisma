@@ -63,6 +63,8 @@ model User {
   recordedExpenses  Expense[] @relation("ExpenseRecorder")
   createdConversations Conversation[] @relation("ConversationCreator")
   sentMessages Message[] @relation("MessageSender")
+  requestedApprovals Approval[] @relation("ApprovalRequestor")
+  decidedApprovals Approval[] @relation("ApprovalDecider")
 
   @@index([email])
   @@index([kind, status])
@@ -538,6 +540,44 @@ model Message {
   @@index([conversationId])
   @@index([senderKind])
   @@index([createdAt])
+}
+
+// ============================================================
+// APPROVALS
+// ============================================================
+
+enum ApprovalType {
+  INVOICE
+  EXPENSE
+  MILESTONE
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Approval {
+  id          String         @id @default(cuid())
+  type        ApprovalType
+  status      ApprovalStatus @default(PENDING)
+  entityId    String
+  requestorId String?
+  requestor   User?          @relation("ApprovalRequestor", fields: [requestorId], references: [id], onDelete: SetNull)
+  decidedById String?
+  decidedBy   User?          @relation("ApprovalDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+  comment     String?        @db.Text
+  decidedAt   DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  deletedAt   DateTime?
+
+  @@unique([type, entityId])
+  @@index([status])
+  @@index([type])
+  @@index([requestorId])
+  @@index([deletedAt])
 }
 
 // ============================================================

@@ -29,7 +29,7 @@ export default async function ExpensesPage({
   const user = await guardPermission("expenses.view");
   const { category } = await searchParams;
 
-  const [expenses, projects, clients] = await Promise.all([
+  const [expenses, projects, clients, expenseApprovals] = await Promise.all([
     prisma.expense.findMany({
       where: {
         deletedAt: null,
@@ -52,6 +52,10 @@ export default async function ExpensesPage({
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
+    prisma.approval.findMany({
+      where: { type: "EXPENSE", deletedAt: null },
+      select: { entityId: true, status: true },
+    }),
   ]);
 
   const now = new Date();
@@ -70,6 +74,8 @@ export default async function ExpensesPage({
     .reduce((sum, e) => sum + e.amountCents, 0);
   const allTimeCents = allExpenses.reduce((sum, e) => sum + e.amountCents, 0);
 
+  const approvalByEntity = new Map(expenseApprovals.map((a) => [a.entityId, a.status]));
+
   const serialized: SerializedExpense[] = expenses.map((expense) => ({
     id: expense.id,
     amountCents: expense.amountCents,
@@ -82,6 +88,7 @@ export default async function ExpensesPage({
     clientId: expense.clientId,
     clientName: expense.client?.name ?? null,
     recordedByName: expense.recordedBy?.name ?? null,
+    approvalStatus: approvalByEntity.get(expense.id) ?? null,
     createdAt: expense.createdAt.toISOString(),
   }));
 
@@ -101,6 +108,7 @@ export default async function ExpensesPage({
         canCreate={user.permissions.has("expenses.create")}
         canEdit={user.permissions.has("expenses.update")}
         canDelete={user.permissions.has("expenses.delete")}
+        canRequestApproval={user.permissions.has("approvals.manage")}
       />
     </>
   );

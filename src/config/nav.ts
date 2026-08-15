@@ -8,6 +8,7 @@ export type NavIconKey =
   | "projects"
   | "tasks"
   | "messages"
+  | "approvals"
   | "billing"
   | "reports"
   | "settings";
@@ -28,6 +29,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/projects", label: "Projects", icon: "projects", permission: "projects.view" },
   { href: "/tasks", label: "Tasks", icon: "tasks", permission: "tasks.view" },
   { href: "/messages", label: "Messages", icon: "messages", permission: "messages.view" },
+  { href: "/approvals", label: "Approvals", icon: "approvals", permission: "approvals.view" },
   {
     href: "/billing",
     label: "Billing",

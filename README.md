@@ -4,10 +4,11 @@ A production-grade, self-hosted business management platform built as a Next.js
 modular monolith. It brings clients, projects, tasks, billing, messaging,
 approvals and AI assistance into one place.
 
-> **Status:** Phase 8 (Messages) — authentication, RBAC, design system, the
+> **Status:** Phase 9 (Approvals) — authentication, RBAC, design system, the
 > Clients & Leads CRM module, Projects with milestones, a Tasks board,
-> invoicing, payments, expenses, a Team module, reporting & analytics, and
-> team↔client messaging. Approvals arrive later.
+> invoicing, payments, expenses, a Team module, reporting & analytics,
+> team↔client messaging, and an approvals workflow with a review queue.
+> Contractors, time tracking, file sharing and the rest arrive later.
 
 ## Highlights
 
@@ -30,6 +31,9 @@ approvals and AI assistance into one place.
   breakdowns, project profitability tables and CSV export
 - **Messaging** — team↔client conversation threads with unread counts,
   per-side read tracking, and a client-portal inbox for replying
+- **Approvals** — request/decide/cancel workflow for expenses, invoices and
+  milestones, with a status-filterable review queue and request entry points
+  directly from the expenses list
 - **Billing** — invoices with line items and tax, sequential invoice numbers,
   send/void lifecycle, payment tracking with auto-paid status, outstanding
   balance summaries, expense tracking with category breakdowns, and a

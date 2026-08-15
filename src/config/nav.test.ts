@@ -29,6 +29,7 @@ describe("filterNavForUser", () => {
       "projects.view",
       "tasks.view",
       "messages.view",
+      "approvals.view",
       "invoices.view",
       "reports.view",
       "settings.manage",
@@ -81,5 +82,13 @@ describe("filterNavForUser", () => {
 
     const withMessages = makeUser(["messages.view"]);
     expect(labels(withMessages)).toContain("Messages");
+  });
+
+  it("shows approvals only with the approvals.view permission", () => {
+    const noApprovals = makeUser(["tasks.view"]);
+    expect(labels(noApprovals)).not.toContain("Approvals");
+
+    const withApprovals = makeUser(["approvals.view"]);
+    expect(labels(withApprovals)).toContain("Approvals");
   });
 });

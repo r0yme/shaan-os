@@ -872,6 +872,43 @@ async function main() {
     });
   }
 
+  console.log("Seeding demo approvals...");
+  const demoExpenseForApproval = await prisma.expense.findFirst({
+    where: { description: "Hosting + monitoring (6 months)" },
+  });
+  if (demoExpenseForApproval) {
+    await prisma.approval.upsert({
+      where: { type_entityId: { type: "EXPENSE", entityId: demoExpenseForApproval.id } },
+      create: {
+        type: "EXPENSE",
+        entityId: demoExpenseForApproval.id,
+        status: "PENDING",
+        requestorId: admin?.id,
+        comment: "Annual hosting renewal — needs sign-off before paying.",
+      },
+      update: {},
+    });
+  }
+
+  const demoInvoiceForApproval = await prisma.invoice.findFirst({
+    where: { number: "INV-0002" },
+  });
+  if (demoInvoiceForApproval) {
+    await prisma.approval.upsert({
+      where: { type_entityId: { type: "INVOICE", entityId: demoInvoiceForApproval.id } },
+      create: {
+        type: "INVOICE",
+        entityId: demoInvoiceForApproval.id,
+        status: "APPROVED",
+        requestorId: admin?.id,
+        decidedById: admin?.id,
+        decidedAt: new Date("2026-06-14"),
+        comment: "Approved before sending to the client.",
+      },
+      update: {},
+    });
+  }
+
   console.log("Seed complete.");
   console.log("");
   console.log("Development credentials (never use in production):");
