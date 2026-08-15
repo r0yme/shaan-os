@@ -355,6 +355,20 @@ export const sharedFileMetadataSchema = z.object({
   clientId: optionalIdSchema,
 });
 
+export const contractorStatusSchema = z.enum(["ACTIVE", "INACTIVE"]);
+
+export const contractorSchema = z.object({
+  name: nameSchema,
+  email: optionalEmailSchema,
+  phone: optionalTextSchema(30, "Phone"),
+  company: optionalTextSchema(120, "Company"),
+  specialty: optionalTextSchema(120, "Specialty"),
+  rate: optionalCentsSchema,
+  status: contractorStatusSchema.default("ACTIVE"),
+  notes: optionalTextSchema(2000, "Notes"),
+  projectIds: z.array(idSchema).optional().default([]),
+});
+
 export function parseWithZod<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
   if (!result.success) {

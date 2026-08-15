@@ -105,6 +105,7 @@ const ADMIN_PERMISSIONS: PermissionKey[] = [
   "milestones.view", "milestones.create", "milestones.update", "milestones.delete",
   "tasks.view", "tasks.create", "tasks.assign", "tasks.update", "tasks.delete",
   "time.view", "time.create", "time.update",
+  "contractors.view", "contractors.create", "contractors.update", "contractors.delete",
   "messages.view", "messages.send", "messages.delete",
   "files.view", "files.upload", "files.download", "files.delete",
   "approvals.view", "approvals.manage",
@@ -1028,6 +1029,75 @@ async function main() {
   ];
   for (const event of demoEvents) {
     await prisma.calendarEvent.create({ data: event });
+  }
+
+  console.log("Seeding demo contractors...");
+  const demoContractorEmails = [
+    "ravi.menon@example.com",
+    "sofia.marchetti@example.com",
+    "kurt.baker@example.com",
+  ];
+  await prisma.contractor.deleteMany({
+    where: { email: { in: demoContractorEmails } },
+  });
+
+  const ctrRedesignProject = projectsByName.get("Website Redesign");
+  const ctrBrandRefreshProject = projectsByName.get("Brand Refresh");
+  const ctrCrmProject = projectsByName.get("Internal CRM Tools");
+  const ctrFleetProject = projectsByName.get("Fleet Dashboard");
+
+  const demoContractors = [
+    {
+      name: "Ravi Menon",
+      email: "ravi.menon@example.com",
+      phone: "+1 555 111 2233",
+      company: "Menon Engineering",
+      specialty: "Frontend engineering",
+      rate: 7500,
+      status: "ACTIVE" as const,
+      notes: "React + TypeScript specialist. Available evenings ET.",
+      projectIds: [ctrRedesignProject, ctrCrmProject].filter((id): id is string => Boolean(id)),
+    },
+    {
+      name: "Sofia Marchetti",
+      email: "sofia.marchetti@example.com",
+      phone: "+1 555 444 5566",
+      company: "Studio Marchetti",
+      specialty: "UI / brand design",
+      rate: 8500,
+      status: "ACTIVE" as const,
+      notes: "Lead visual design for brand engagements.",
+      projectIds: [ctrRedesignProject, ctrBrandRefreshProject].filter((id): id is string => Boolean(id)),
+    },
+    {
+      name: "Kurt Baker",
+      email: "kurt.baker@example.com",
+      phone: "+1 555 777 8899",
+      company: "Baker QA Labs",
+      specialty: "Quality assurance",
+      rate: 4500,
+      status: "INACTIVE" as const,
+      notes: "Manual QA for dashboards. On standby.",
+      projectIds: [ctrFleetProject].filter((id): id is string => Boolean(id)),
+    },
+  ];
+  for (const contractor of demoContractors) {
+    await prisma.contractor.create({
+      data: {
+        name: contractor.name,
+        email: contractor.email,
+        phone: contractor.phone,
+        company: contractor.company,
+        specialty: contractor.specialty,
+        rate: contractor.rate,
+        status: contractor.status,
+        notes: contractor.notes,
+        createdById: admin?.id,
+        assignments: {
+          create: contractor.projectIds.map((projectId) => ({ projectId })),
+        },
+      },
+    });
   }
 
   console.log("Seeding demo shared files...");

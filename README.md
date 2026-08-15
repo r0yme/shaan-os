@@ -4,12 +4,12 @@ A production-grade, self-hosted business management platform built as a Next.js
 modular monolith. It brings clients, projects, tasks, billing, messaging,
 approvals and AI assistance into one place.
 
-> **Status:** Phase 12 (File sharing) — authentication, RBAC, design system,
+> **Status:** Phase 13 (Contractors) — authentication, RBAC, design system,
 > the Clients & Leads CRM module, Projects with milestones, a Tasks board,
 > invoicing, payments, expenses, a Team module, reporting & analytics,
 > team↔client messaging, an approvals workflow, time tracking, a shared
-> calendar with a month grid, and file sharing with secure downloads and a
-> client portal view. Contractors and the rest arrive later.
+> calendar with a month grid, file sharing with secure downloads, and a
+> contractor roster with project assignments. The rest arrives later.
 
 ## Highlights
 
@@ -46,6 +46,9 @@ approvals and AI assistance into one place.
   downloads (25 MB cap, path-traversal-safe local storage) scoped so a client
   only ever sees their own files, plus a read-only files page in the client
   portal
+- **Contractors** — external specialist roster with contact details, specialty,
+  hourly rate and active/inactive status, project assignments (many-to-many),
+  status/project filtering and rate summaries; managed by owners and admins
 - **Billing** — invoices with line items and tax, sequential invoice numbers,
   send/void lifecycle, payment tracking with auto-paid status, outstanding
   balance summaries, expense tracking with category breakdowns, and a

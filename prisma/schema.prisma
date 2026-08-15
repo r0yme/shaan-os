@@ -68,6 +68,7 @@ model User {
   timeEntries TimeEntry[] @relation("TimeEntryUser")
   createdCalendarEvents CalendarEvent[] @relation("CalendarEventCreator")
   uploadedFiles SharedFile[] @relation("SharedFileUploader")
+  createdContractors Contractor[] @relation("ContractorCreator")
 
   @@index([email])
   @@index([kind, status])
@@ -314,6 +315,8 @@ model Project {
   calendarEvents CalendarEvent[] @relation("CalendarEventProject")
 
   files SharedFile[] @relation("SharedFileProject")
+
+  contractorAssignments ContractorProject[]
 
   @@index([status])
   @@index([clientId])
@@ -640,6 +643,51 @@ model CalendarEvent {
   @@index([clientId])
   @@index([createdById])
   @@index([deletedAt])
+}
+
+// ============================================================
+// CONTRACTORS
+// ============================================================
+
+enum ContractorStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Contractor {
+  id          String            @id @default(cuid())
+  name        String
+  email       String?           @unique
+  phone       String?
+  company     String?
+  specialty   String?
+  // Hourly rate in minor units (cents for USD). Null = not set.
+  rate        Int?
+  status      ContractorStatus  @default(ACTIVE)
+  notes       String?           @db.Text
+  createdById String?
+  createdBy   User?             @relation("ContractorCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  deletedAt   DateTime?
+
+  assignments ContractorProject[]
+
+  @@index([status])
+  @@index([createdById])
+  @@index([deletedAt])
+}
+
+// Many-to-many between contractors and the projects they work on.
+model ContractorProject {
+  contractorId String
+  contractor   Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  projectId    String
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@id([contractorId, projectId])
+  @@index([projectId])
 }
 
 // ============================================================

@@ -26,6 +26,7 @@ describe("filterNavForUser", () => {
       "clients.view",
       "leads.view",
       "employees.view",
+      "contractors.view",
       "projects.view",
       "tasks.view",
       "time.view",
@@ -69,6 +70,14 @@ describe("filterNavForUser", () => {
 
     const withLeads = makeUser(["leads.view"]);
     expect(labels(withLeads)).toContain("Leads");
+  });
+
+  it("shows contractors only with the contractors.view permission", () => {
+    const noContractors = makeUser(["employees.view"]);
+    expect(labels(noContractors)).not.toContain("Contractors");
+
+    const withContractors = makeUser(["contractors.view"]);
+    expect(labels(withContractors)).toContain("Contractors");
   });
 
   it("shows employees only with the employees.view permission", () => {

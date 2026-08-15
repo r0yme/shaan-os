@@ -24,6 +24,7 @@ import {
   timeEntrySchema,
   calendarEventSchema,
   sharedFileMetadataSchema,
+  contractorSchema,
 } from "@/lib/validation";
 import { ValidationError } from "@/lib/errors";
 
@@ -709,5 +710,55 @@ describe("sharedFileMetadataSchema", () => {
 
   it("rejects a non-integer size", () => {
     expect(sharedFileMetadataSchema.safeParse({ name: "x", size: 1.5 }).success).toBe(false);
+  });
+});
+
+describe("contractorSchema", () => {
+  it("accepts a minimal contractor", () => {
+    const result = contractorSchema.parse({ name: "Ada Lovelace" });
+    expect(result.name).toBe("Ada Lovelace");
+    expect(result.status).toBe("ACTIVE");
+    expect(result.rate).toBeNull();
+    expect(result.projectIds).toEqual([]);
+  });
+
+  it("keeps contact details, rate and project assignments", () => {
+    const result = contractorSchema.parse({
+      name: "  Linus Torvalds  ",
+      email: "linus@kernel.org",
+      phone: "+1 555 000 0000",
+      company: "Linux Foundation",
+      specialty: "Kernel engineering",
+      rate: "8500",
+      status: "INACTIVE",
+      notes: "Core contributor",
+      projectIds: ["p_1", "p_2"],
+    });
+    expect(result.name).toBe("Linus Torvalds");
+    expect(result.email).toBe("linus@kernel.org");
+    expect(result.rate).toBe(8500);
+    expect(result.status).toBe("INACTIVE");
+    expect(result.projectIds).toEqual(["p_1", "p_2"]);
+  });
+
+  it("turns an empty email into null", () => {
+    const result = contractorSchema.parse({ name: "X", email: "" });
+    expect(result.email).toBeNull();
+  });
+
+  it("rejects a blank non-empty email", () => {
+    expect(contractorSchema.safeParse({ name: "X", email: "   " }).success).toBe(false);
+  });
+
+  it("rejects an invalid email", () => {
+    expect(contractorSchema.safeParse({ name: "X", email: "not-an-email" }).success).toBe(false);
+  });
+
+  it("rejects an empty name", () => {
+    expect(contractorSchema.safeParse({ name: "  " }).success).toBe(false);
+  });
+
+  it("rejects a negative rate", () => {
+    expect(contractorSchema.safeParse({ name: "X", rate: "-5" }).success).toBe(false);
   });
 });
