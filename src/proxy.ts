@@ -5,7 +5,14 @@ const PUBLIC_PATHS = ["/login"];
 
 export async function proxy(request: NextRequest) {
   const { pathname, origin } = request.nextUrl;
-  const token = await getToken({ req: request, secret: process.env.AUTH_SECRET });
+  const secureCookie =
+    process.env.AUTH_URL?.startsWith("https://") ??
+    request.nextUrl.protocol.startsWith("https");
+  const token = await getToken({
+    req: request,
+    secret: process.env.AUTH_SECRET,
+    secureCookie,
+  });
   const isLoggedIn = Boolean(token);
 
   const isPublic =
