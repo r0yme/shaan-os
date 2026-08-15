@@ -37,6 +37,7 @@ describe("filterNavForUser", () => {
       "approvals.view",
       "invoices.view",
       "reports.view",
+      "finance.view",
       "audit.view",
       "search.global",
       "settings.manage",
@@ -153,5 +154,13 @@ describe("filterNavForUser", () => {
 
     const withSearch = makeUser(["search.global"]);
     expect(labels(withSearch)).toContain("Search");
+  });
+
+  it("shows finance only with the finance.view permission", () => {
+    const noFinance = makeUser(["tasks.view"]);
+    expect(labels(noFinance)).not.toContain("Finance");
+
+    const withFinance = makeUser(["finance.view"]);
+    expect(labels(withFinance)).toContain("Finance");
   });
 });

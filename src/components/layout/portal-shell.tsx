@@ -22,6 +22,7 @@ import {
   BadgeCheck,
   Receipt,
   BarChart3,
+  Coins,
   ScrollText,
   Settings,
 } from "lucide-react";
@@ -51,6 +52,7 @@ const NAV_ICONS = {
   approvals: BadgeCheck,
   billing: Receipt,
   reports: BarChart3,
+  finance: Coins,
   audit: ScrollText,
   settings: Settings,
 } satisfies Record<NavIconKey, typeof LayoutDashboard>;

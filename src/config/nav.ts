@@ -17,6 +17,7 @@ export type NavIconKey =
   | "approvals"
   | "billing"
   | "reports"
+  | "finance"
   | "audit"
   | "settings";
 
@@ -60,6 +61,7 @@ export const NAV_ITEMS: NavItem[] = [
     anyPermission: ["invoices.view", "payments.view", "expenses.view"],
   },
   { href: "/reports", label: "Reports", icon: "reports", permission: "reports.view" },
+  { href: "/finance", label: "Finance", icon: "finance", permission: "finance.view" },
   { href: "/audit", label: "Audit", icon: "audit", permission: "audit.view" },
   { href: "/settings", label: "Settings", icon: "settings", permission: "settings.manage" },
 ];
