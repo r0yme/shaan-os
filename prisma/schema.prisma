@@ -1,0 +1,227 @@
+// Shaan Business OS — Prisma schema
+// Phase 1: Foundation (auth, RBAC, settings, audit).
+// Later phases add CRM, projects, tasks, finance etc. in additive migrations.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// AUTHENTICATION
+// ============================================================
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+  INACTIVE
+}
+
+// Kind distinguishes team members (USER) from portal users (CLIENT).
+// Clients are real users of the system so they can authenticate into the portal.
+enum UserKind {
+  USER
+  CLIENT
+}
+
+model User {
+  id               String     @id @default(cuid())
+  name             String?
+  email            String?    @unique
+  emailVerified    DateTime?
+  image            String?
+  passwordHash     String?
+  phone            String?
+  kind             UserKind   @default(USER)
+  status           UserStatus @default(INVITED)
+  lastLoginAt      DateTime?
+  failedLoginCount Int        @default(0)
+  lockedUntil      DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  deletedAt        DateTime?
+  createdBy        String?
+
+  accounts  Account[]
+  sessions  Session[]
+  roles     UserRole[]
+  auditLogs AuditLog[]
+
+  @@index([email])
+  @@index([kind, status])
+  @@index([deletedAt])
+}
+
+// Auth.js (Prisma adapter) — Account model
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+// Auth.js (Prisma adapter) — Session model
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Auth.js (Prisma adapter) — VerificationToken model
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================
+// AUTHORIZATION / RBAC
+// ============================================================
+
+model Role {
+  id          String   @id @default(cuid())
+  key         String   @unique // e.g. OWNER, ADMIN, PROJECT_MANAGER, EMPLOYEE, CLIENT
+  name        String
+  description String?
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  permissions RolePermission[]
+  users       UserRole[]
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  key         String   @unique // e.g. clients.view, finance.view
+  module      String // e.g. clients, projects, finance
+  description String?
+  createdAt   DateTime @default(now())
+
+  roles RolePermission[]
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime   @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([roleId])
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+
+model BusinessProfile {
+  id                String   @id @default(cuid())
+  name              String?
+  logoUrl           String?
+  email             String?
+  phone             String?
+  website           String?
+  address           String?
+  country           String?
+  currency          String   @default("USD")
+  timezone          String   @default("UTC")
+  invoicePrefix     String   @default("INV")
+  invoiceNextNumber Int      @default(1)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  updatedBy         String?
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json?
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================================
+// AUDIT
+// ============================================================
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  LOGIN_FAILED
+  PASSWORD_CHANGE
+  PASSWORD_RESET
+  ROLE_CHANGE
+  PERMISSION_CHANGE
+  CREATE
+  UPDATE
+  DELETE
+  SOFT_DELETE
+  RESTORE
+  APPROVE
+  REJECT
+  STATUS_CHANGE
+  SETTINGS_CHANGE
+  EXPORT
+  OTHER
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  actorId   String?
+  actorType String      @default("user") // user | client | system
+  action    AuditAction
+  entity    String
+  entityId  String?
+  summary   String?
+  metadata  Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime    @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+}

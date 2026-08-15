@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: oklch(0.985 0.002 260);
+  --foreground: oklch(0.16 0.02 260);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.16 0.02 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.16 0.02 260);
+  --primary: oklch(0.51 0.22 275);
+  --primary-foreground: oklch(0.985 0.002 260);
+  --secondary: oklch(0.955 0.008 260);
+  --secondary-foreground: oklch(0.28 0.04 265);
+  --muted: oklch(0.955 0.008 260);
+  --muted-foreground: oklch(0.52 0.02 262);
+  --accent: oklch(0.945 0.03 275);
+  --accent-foreground: oklch(0.35 0.12 275);
+  --destructive: oklch(0.577 0.245 27);
+  --destructive-foreground: oklch(0.985 0.002 260);
+  --success: oklch(0.55 0.16 155);
+  --success-foreground: oklch(0.985 0.002 260);
+  --warning: oklch(0.62 0.17 75);
+  --warning-foreground: oklch(0.16 0.02 260);
+  --border: oklch(0.92 0.005 260);
+  --input: oklch(0.9 0.006 260);
+  --ring: oklch(0.58 0.2 275);
+  --sidebar: oklch(0.98 0.004 260);
+  --sidebar-foreground: oklch(0.3 0.03 262);
+  --radius: 0.625rem;
+}
+
+.dark {
+  --background: oklch(0.145 0.012 260);
+  --foreground: oklch(0.94 0.006 260);
+  --card: oklch(0.19 0.015 262);
+  --card-foreground: oklch(0.94 0.006 260);
+  --popover: oklch(0.19 0.015 262);
+  --popover-foreground: oklch(0.94 0.006 260);
+  --primary: oklch(0.66 0.19 278);
+  --primary-foreground: oklch(0.16 0.03 260);
+  --secondary: oklch(0.26 0.02 262);
+  --secondary-foreground: oklch(0.94 0.006 260);
+  --muted: oklch(0.26 0.02 262);
+  --muted-foreground: oklch(0.7 0.015 262);
+  --accent: oklch(0.28 0.05 275);
+  --accent-foreground: oklch(0.92 0.03 278);
+  --destructive: oklch(0.6 0.22 24);
+  --destructive-foreground: oklch(0.985 0.002 260);
+  --success: oklch(0.66 0.16 158);
+  --success-foreground: oklch(0.12 0.02 158);
+  --warning: oklch(0.74 0.15 78);
+  --warning-foreground: oklch(0.16 0.02 260);
+  --border: oklch(0.3 0.015 262);
+  --input: oklch(0.32 0.015 262);
+  --ring: oklch(0.62 0.18 278);
+  --sidebar: oklch(0.17 0.013 262);
+  --sidebar-foreground: oklch(0.78 0.02 262);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background-color: color-mix(in oklch, var(--primary) 22%, transparent);
+}
+
+/* Focus visibility for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Slim, theme-aware scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted-foreground) transparent;
+}
