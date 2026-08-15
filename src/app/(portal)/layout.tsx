@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
-import { requireUser } from "@/lib/session";
+import { guardUser } from "@/lib/page-guard";
 import { filterNavForUser } from "@/config/nav";
 import { PortalShell } from "@/components/layout/portal-shell";
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
-  const user = await requireUser();
+  const user = await guardUser();
   if (user.kind === "CLIENT") redirect("/c");
 
   const items = filterNavForUser(user);

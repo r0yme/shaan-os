@@ -24,6 +24,7 @@ describe("filterNavForUser", () => {
     const all = NAV_ITEMS.map((i) => i.label);
     const user = makeUser([
       "clients.view",
+      "leads.view",
       "projects.view",
       "tasks.view",
       "invoices.view",
@@ -54,5 +55,13 @@ describe("filterNavForUser", () => {
   it("always includes the dashboard", () => {
     const user = makeUser([]);
     expect(labels(user)).toEqual(["Dashboard"]);
+  });
+
+  it("shows leads only with the leads.view permission", () => {
+    const noLeads = makeUser(["clients.view"]);
+    expect(labels(noLeads)).not.toContain("Leads");
+
+    const withLeads = makeUser(["leads.view"]);
+    expect(labels(withLeads)).toContain("Leads");
   });
 });

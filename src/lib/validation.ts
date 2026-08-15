@@ -21,6 +21,74 @@ export const nameSchema = z
 
 export const idSchema = z.string().trim().min(1).max(64);
 
+export const clientStatusSchema = z.enum(["ACTIVE", "INACTIVE"]);
+export const clientKindSchema = z.enum(["BUSINESS", "INDIVIDUAL"]);
+export const leadSourceSchema = z.enum([
+  "WEBSITE",
+  "REFERRAL",
+  "SOCIAL_MEDIA",
+  "EMAIL",
+  "CALL",
+  "OUTREACH",
+  "OTHER",
+]);
+export const leadStatusSchema = z.enum([
+  "NEW",
+  "CONTACTED",
+  "QUALIFIED",
+  "PROPOSAL",
+  "WON",
+  "LOST",
+]);
+
+export const optionalEmailSchema = z
+  .union([z.literal(""), emailSchema])
+  .optional()
+  .transform((v) => (v === undefined || v === "" ? null : v));
+
+export function optionalTextSchema(max: number, field: string) {
+  return z
+    .string()
+    .trim()
+    .max(max, `${field} must be at most ${max} characters.`)
+    .optional()
+    .transform((v) => (v === undefined || v === "" ? null : v));
+}
+
+export const optionalCentsSchema = z
+  .union([
+    z.literal(""),
+    z.string().trim().regex(/^\d+$/, "Value must be a whole number."),
+  ])
+  .optional()
+  .transform((v) => (v === undefined || v === "" ? null : Number(v)))
+  .refine((v) => v === null || v <= 1_000_000_000, "Value is too large.");
+
+export const clientSchema = z.object({
+  name: nameSchema,
+  email: optionalEmailSchema,
+  phone: optionalTextSchema(30, "Phone"),
+  company: optionalTextSchema(120, "Company"),
+  website: optionalTextSchema(200, "Website"),
+  address: optionalTextSchema(300, "Address"),
+  notes: optionalTextSchema(2000, "Notes"),
+  status: clientStatusSchema.default("ACTIVE"),
+  kind: clientKindSchema.default("BUSINESS"),
+});
+
+export const leadSchema = z.object({
+  name: nameSchema,
+  email: optionalEmailSchema,
+  phone: optionalTextSchema(30, "Phone"),
+  company: optionalTextSchema(120, "Company"),
+  source: leadSourceSchema.default("OTHER"),
+  status: leadStatusSchema.default("NEW"),
+  value: optionalCentsSchema,
+  notes: optionalTextSchema(2000, "Notes"),
+  assigneeId: z.string().trim().min(1).max(64).optional(),
+  clientId: z.string().trim().min(1).max(64).optional(),
+});
+
 export function parseWithZod<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
   if (!result.success) {

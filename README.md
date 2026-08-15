@@ -4,8 +4,9 @@ A production-grade, self-hosted business management platform built as a Next.js
 modular monolith. It brings clients, projects, tasks, billing, messaging,
 approvals and AI assistance into one place.
 
-> **Status:** Phase 1 (Foundation) — authentication, RBAC, design system and
-> base UI are in place. Client/Project/Task modules arrive in later phases.
+> **Status:** Phase 2 (Clients & Leads) — authentication, RBAC, design system
+> and base UI from Phase 1, plus the Clients and Leads CRM module. Projects,
+> Tasks and Billing arrive in later phases.
 
 ## Highlights
 
@@ -14,6 +15,8 @@ approvals and AI assistance into one place.
 - **RBAC** — Owner / Admin / Project Manager / Employee / Client roles with
   granular permissions, enforced server-side on every request
 - **PostgreSQL + Prisma 7** with driver adapter, migrations and seed data
+- **Clients & Leads** — client/lead CRUD, leads pipeline board with
+  convert-to-client, client detail pages and a client portal profile view
 - **Design system** — semantic tokens, light/dark/system themes, reusable UI kit
 - **Logging** — pino (pretty in dev, structured JSON in production)
 - **Health endpoint** — `/api/health` checks database connectivity

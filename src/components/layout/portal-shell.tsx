@@ -8,6 +8,7 @@ import {
   X,
   LayoutDashboard,
   Users,
+  Radar,
   FolderKanban,
   ListTodo,
   Receipt,
@@ -25,6 +26,7 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 const NAV_ICONS = {
   dashboard: LayoutDashboard,
   clients: Users,
+  leads: Radar,
   projects: FolderKanban,
   tasks: ListTodo,
   billing: Receipt,

@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { requireUser } from "@/lib/session";
+import { guardUser } from "@/lib/page-guard";
 import { ClientShell } from "@/components/layout/client-shell";
 
 export default async function ClientLayout({ children }: { children: React.ReactNode }) {
-  const user = await requireUser();
+  const user = await guardUser();
   if (user.kind !== "CLIENT") redirect("/dashboard");
 
   return (

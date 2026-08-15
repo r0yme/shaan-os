@@ -3,6 +3,7 @@ import type { CurrentUser } from "@/lib/session";
 export type NavIconKey =
   | "dashboard"
   | "clients"
+  | "leads"
   | "projects"
   | "tasks"
   | "billing"
@@ -20,6 +21,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
   { href: "/clients", label: "Clients", icon: "clients", permission: "clients.view" },
+  { href: "/leads", label: "Leads", icon: "leads", permission: "leads.view" },
   { href: "/projects", label: "Projects", icon: "projects", permission: "projects.view" },
   { href: "/tasks", label: "Tasks", icon: "tasks", permission: "tasks.view" },
   {

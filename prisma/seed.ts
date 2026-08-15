@@ -262,6 +262,161 @@ async function main() {
     update: { value: true },
   });
 
+  console.log("Seeding demo clients and leads...");
+  const admin = await prisma.user.findUnique({ where: { email: "admin@example.com" } });
+  const clientUser = await prisma.user.findUnique({ where: { email: "client@example.com" } });
+
+  interface DemoClient {
+    email?: string;
+    name: string;
+    company?: string;
+    kind: "BUSINESS" | "INDIVIDUAL";
+    status: "ACTIVE" | "INACTIVE";
+    phone?: string;
+    website?: string;
+    address?: string;
+    notes?: string;
+    portalUserId?: string;
+  }
+
+  const demoClients: DemoClient[] = [
+    {
+      email: "acme@example.com",
+      name: "Acme Corporation",
+      company: "Acme Corporation",
+      kind: "BUSINESS" as const,
+      status: "ACTIVE" as const,
+      phone: "+1 555 0100",
+      website: "https://acme.example.com",
+      address: "100 Innovation Drive, Springfield",
+      notes: "Long-term retainer client. Prefers weekly status calls.",
+      portalUserId: clientUser?.id,
+    },
+    {
+      email: "globex@example.com",
+      name: "Globex Studios",
+      company: "Globex Studios",
+      kind: "BUSINESS" as const,
+      status: "INACTIVE" as const,
+      phone: "+1 555 0101",
+      website: "https://globex.example.com",
+      notes: "Paused work after budget review in Q3.",
+    },
+    {
+      email: "dane.whitmore@example.com",
+      name: "Dane Whitmore",
+      kind: "INDIVIDUAL" as const,
+      status: "ACTIVE" as const,
+      phone: "+1 555 0102",
+      notes: "Individual consultant. One-off project engagements.",
+    },
+  ];
+
+  const clientIds = new Map<string, string>();
+  for (const client of demoClients) {
+    const email = client.email ?? `${client.name.toLowerCase().replace(/\s+/g, ".")}@example.com`;
+    const record = await prisma.client.upsert({
+      where: { email },
+      create: {
+        name: client.name,
+        email,
+        company: client.company ?? (client.kind === "BUSINESS" ? client.name : null),
+        phone: client.phone,
+        website: client.website,
+        address: client.address,
+        notes: client.notes,
+        kind: client.kind,
+        status: client.status,
+        portalUserId: client.portalUserId,
+        accountManagerId: admin?.id,
+      },
+      update: {
+        name: client.name,
+        company: client.company ?? (client.kind === "BUSINESS" ? client.name : null),
+        phone: client.phone,
+        website: client.website,
+        address: client.address,
+        notes: client.notes,
+        kind: client.kind,
+        status: client.status,
+        portalUserId: client.portalUserId,
+        accountManagerId: admin?.id,
+      },
+    });
+    clientIds.set(client.name, record.id);
+  }
+
+  const demoLeads = [
+    {
+      name: "Maria Gonzalez",
+      email: "maria.gonzalez@example.com",
+      company: "Brightline Media",
+      source: "WEBSITE" as const,
+      status: "NEW" as const,
+      value: 250000,
+      notes: "Requested proposal for brand refresh.",
+    },
+    {
+      name: "John Carter",
+      email: "john.carter@example.com",
+      company: "Carter & Co",
+      source: "REFERRAL" as const,
+      status: "CONTACTED" as const,
+      value: 900000,
+      notes: "Referred by Acme Corporation.",
+    },
+    {
+      name: "Priya Sharma",
+      email: "priya.sharma@example.com",
+      source: "SOCIAL_MEDIA" as const,
+      status: "QUALIFIED" as const,
+      value: 450000,
+      notes: "Needs e-commerce platform migration.",
+    },
+    {
+      name: "Tomás Rivera",
+      email: "tomas.rivera@example.com",
+      company: "Rivera Logistics",
+      source: "EMAIL" as const,
+      status: "PROPOSAL" as const,
+      value: 1200000,
+      notes: "Proposal for fleet management dashboard sent.",
+    },
+  ];
+
+  for (const lead of demoLeads) {
+    const existing = lead.email
+      ? await prisma.lead.findFirst({ where: { email: lead.email } })
+      : null;
+    if (existing) {
+      await prisma.lead.update({
+        where: { id: existing.id },
+        data: {
+          name: lead.name,
+          company: lead.company,
+          source: lead.source,
+          status: lead.status,
+          value: lead.value,
+          notes: lead.notes,
+          assigneeId: admin?.id,
+        },
+      });
+      continue;
+    }
+    await prisma.lead.create({
+      data: {
+        name: lead.name,
+        email: lead.email,
+        company: lead.company,
+        source: lead.source,
+        status: lead.status,
+        value: lead.value,
+        notes: lead.notes,
+        assigneeId: admin?.id,
+      },
+    });
+  }
+
   console.log("Seed complete.");
   console.log("");
   console.log("Development credentials (never use in production):");

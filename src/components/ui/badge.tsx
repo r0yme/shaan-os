@@ -1,7 +1,7 @@
 import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-type BadgeTone = "default" | "primary" | "success" | "warning" | "destructive" | "outline";
+export type BadgeTone = "default" | "primary" | "success" | "warning" | "destructive" | "outline";
 
 const toneClasses: Record<BadgeTone, string> = {
   default: "bg-muted text-muted-foreground",

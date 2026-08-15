@@ -71,10 +71,12 @@ Models live in `prisma/schema.prisma`. Current foundation tables:
 | `BusinessProfile` | Workspace identity, currency, timezone, invoice prefix |
 | `Setting` | Key/value application settings |
 | `AuditLog` | Immutable, security-relevant audit events |
+| `Client` | Business/individual customers, lifecycle status, account manager, portal login link |
+| `Lead` | Prospects tracked through the pipeline (NEW → QUALIFIED → PROPOSAL → WON/LOST), deal value in minor units |
 
 Enums: `UserKind` (`USER | CLIENT`), `UserStatus` (`ACTIVE | SUSPENDED`),
-`AuditAction` (security events). Import them from
-`src/generated/prisma/enums`.
+`AuditAction` (security events), `ClientStatus`, `ClientKind`, `LeadSource`,
+`LeadStatus`. Import them from `src/generated/prisma/enums`.
 
 ## Backup / restore (pg_dump)
 

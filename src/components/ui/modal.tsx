@@ -18,7 +18,7 @@ export function Modal({
   onClose: () => void;
   title: string;
   description?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   footer?: React.ReactNode;
   size?: "sm" | "md" | "lg";
 }) {
@@ -67,7 +67,7 @@ export function Modal({
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <div className="p-5">{children}</div>
+        {children && <div className="p-5">{children}</div>}
         {footer && (
           <div className="flex justify-end gap-3 border-t border-border p-5">{footer}</div>
         )}
