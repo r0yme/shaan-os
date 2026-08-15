@@ -769,6 +769,40 @@ async function main() {
     data: { invoiceNextNumber: 3 },
   });
 
+  console.log("Seeding demo expenses...");
+  const demoExpenseDescriptions = [
+    "Hosting + monitoring (6 months)",
+    "Figma subscription — Q3",
+    "External monitor + laptop stand",
+    "Client site visit — taxi",
+    "Team lunch after kickoff",
+    "Accounting services — quarterly",
+  ];
+  const demoExpenses = [
+    { description: "Hosting + monitoring (6 months)", amountCents: 120000, category: "SOFTWARE" as const, merchant: "Vercel", incurredAt: new Date("2026-07-05") },
+    { description: "Figma subscription — Q3", amountCents: 24000, category: "SOFTWARE" as const, merchant: "Figma", incurredAt: new Date("2026-07-02") },
+    { description: "External monitor + laptop stand", amountCents: 89900, category: "HARDWARE" as const, merchant: "Best Buy", incurredAt: new Date("2026-06-18") },
+    { description: "Client site visit — taxi", amountCents: 15000, category: "TRAVEL" as const, merchant: "Uber", incurredAt: new Date("2026-06-10") },
+    { description: "Team lunch after kickoff", amountCents: 8500, category: "MEALS" as const, merchant: "Local Bistro", incurredAt: new Date("2026-06-25") },
+    { description: "Accounting services — quarterly", amountCents: 50000, category: "SERVICES" as const, merchant: "ClearBooks", incurredAt: new Date("2026-05-28") },
+  ];
+
+  await prisma.expense.deleteMany({
+    where: { description: { in: demoExpenseDescriptions } },
+  });
+  for (const expense of demoExpenses) {
+    await prisma.expense.create({
+      data: {
+        amountCents: expense.amountCents,
+        category: expense.category,
+        merchant: expense.merchant,
+        description: expense.description,
+        incurredAt: expense.incurredAt,
+        recordedById: admin?.id,
+      },
+    });
+  }
+
   console.log("Seed complete.");
   console.log("");
   console.log("Development credentials (never use in production):");

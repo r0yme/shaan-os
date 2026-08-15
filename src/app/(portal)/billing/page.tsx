@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { guardPermission } from "@/lib/page-guard";
 import { PageHeading } from "@/components/page-heading";
+import { BillingTabs } from "@/components/billing/billing-tabs";
 import {
   BillingManager,
   type SerializedInvoice,
@@ -109,6 +110,7 @@ export default async function BillingPage({
         title="Billing"
         description="Invoices, payments and outstanding balances."
       />
+      <BillingTabs active="invoices" />
       <BillingManager
         invoices={serialized}
         statusFilter={status && STATUSES.has(status) ? status : ""}

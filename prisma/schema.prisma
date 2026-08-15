@@ -59,6 +59,7 @@ model User {
   createdTasks      Task[]    @relation("TaskCreator")
   createdInvoices   Invoice[] @relation("InvoiceCreator")
   recordedPayments  Payment[] @relation("PaymentRecorder")
+  recordedExpenses  Expense[] @relation("ExpenseRecorder")
 
   @@index([email])
   @@index([kind, status])
@@ -196,6 +197,7 @@ model Client {
   leads    Lead[]
   projects Project[]
   invoices Invoice[]
+  expenses Expense[]
 
   @@index([status])
   @@index([accountManagerId])
@@ -294,6 +296,8 @@ model Project {
 
   invoices Invoice[]
 
+  expenses Expense[]
+
   @@index([status])
   @@index([clientId])
   @@index([managerId])
@@ -385,6 +389,16 @@ enum PaymentMethod {
   OTHER
 }
 
+enum ExpenseCategory {
+  SOFTWARE
+  HARDWARE
+  SERVICES
+  TRAVEL
+  MEALS
+  OFFICE
+  OTHER
+}
+
 model Invoice {
   id           String        @id @default(cuid())
   number       String        @unique // e.g. INV-0001
@@ -444,6 +458,30 @@ model Payment {
 
   @@index([invoiceId])
   @@index([paidAt])
+}
+
+model Expense {
+  id           String          @id @default(cuid())
+  amountCents  Int
+  category     ExpenseCategory @default(OTHER)
+  merchant     String?
+  description  String?         @db.Text
+  incurredAt   DateTime        @default(now())
+  projectId    String?
+  project      Project?        @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  clientId     String?
+  client       Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  recordedById String?
+  recordedBy   User?           @relation("ExpenseRecorder", fields: [recordedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  deletedAt    DateTime?
+
+  @@index([category])
+  @@index([incurredAt])
+  @@index([projectId])
+  @@index([clientId])
+  @@index([deletedAt])
 }
 
 // ============================================================

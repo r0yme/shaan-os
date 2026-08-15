@@ -24,3 +24,18 @@ export function PaymentMethodBadge({ method }: { method: string }) {
   const config = PAYMENT_METHOD[method] ?? { label: method, tone: "outline" as BadgeTone };
   return <Badge tone={config.tone}>{config.label}</Badge>;
 }
+
+const EXPENSE_CATEGORY: Record<string, { label: string; tone: BadgeTone }> = {
+  SOFTWARE: { label: "Software", tone: "primary" },
+  HARDWARE: { label: "Hardware", tone: "primary" },
+  SERVICES: { label: "Services", tone: "default" },
+  TRAVEL: { label: "Travel", tone: "warning" },
+  MEALS: { label: "Meals", tone: "warning" },
+  OFFICE: { label: "Office", tone: "default" },
+  OTHER: { label: "Other", tone: "outline" },
+};
+
+export function ExpenseCategoryBadge({ category }: { category: string }) {
+  const config = EXPENSE_CATEGORY[category] ?? { label: category, tone: "outline" as BadgeTone };
+  return <Badge tone={config.tone}>{config.label}</Badge>;
+}

@@ -213,6 +213,32 @@ export const paymentSchema = z.object({
   notes: optionalTextSchema(500, "Notes"),
 });
 
+export const expenseCategorySchema = z.enum([
+  "SOFTWARE",
+  "HARDWARE",
+  "SERVICES",
+  "TRAVEL",
+  "MEALS",
+  "OFFICE",
+  "OTHER",
+]);
+
+export const expenseSchema = z.object({
+  amountCents: z
+    .string()
+    .trim()
+    .regex(/^\d+$/, "Amount must be a whole number.")
+    .transform((v) => Number(v))
+    .refine((v) => v > 0, "Expense amount must be greater than zero.")
+    .refine((v) => v <= 1_000_000_000_000, "Amount is too large."),
+  category: expenseCategorySchema.default("OTHER"),
+  merchant: optionalTextSchema(120, "Merchant"),
+  description: optionalTextSchema(4000, "Description"),
+  incurredAt: optionalDateSchema,
+  projectId: optionalIdSchema,
+  clientId: optionalIdSchema,
+});
+
 export function parseWithZod<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
   if (!result.success) {

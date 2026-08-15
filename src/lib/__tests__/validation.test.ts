@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   clientSchema,
   emailSchema,
+  expenseSchema,
   invoiceItemSchema,
   invoiceSchema,
   leadSchema,
@@ -325,5 +326,44 @@ describe("paymentSchema", () => {
 
   it("rejects an unknown method", () => {
     expect(paymentSchema.safeParse({ amountCents: "100", method: "PAYPAL" }).success).toBe(false);
+  });
+});
+
+describe("expenseSchema", () => {
+  it("parses a valid expense with defaults", () => {
+    const result = expenseSchema.parse({ amountCents: "120000" });
+    expect(result.amountCents).toBe(120000);
+    expect(result.category).toBe("OTHER");
+    expect(result.merchant).toBeNull();
+    expect(result.projectId).toBeNull();
+    expect(result.clientId).toBeNull();
+  });
+
+  it("parses category, date and optional references", () => {
+    const result = expenseSchema.parse({
+      amountCents: "89900",
+      category: "HARDWARE",
+      merchant: "Best Buy",
+      incurredAt: "2026-06-18",
+      projectId: "cm-project",
+      clientId: "",
+    });
+    expect(result.category).toBe("HARDWARE");
+    expect(result.merchant).toBe("Best Buy");
+    expect(result.incurredAt?.toISOString().slice(0, 10)).toBe("2026-06-18");
+    expect(result.projectId).toBe("cm-project");
+    expect(result.clientId).toBeNull();
+  });
+
+  it("rejects a zero amount", () => {
+    expect(expenseSchema.safeParse({ amountCents: "0" }).success).toBe(false);
+  });
+
+  it("rejects a non-numeric amount", () => {
+    expect(expenseSchema.safeParse({ amountCents: "abc" }).success).toBe(false);
+  });
+
+  it("rejects an unknown category", () => {
+    expect(expenseSchema.safeParse({ amountCents: "100", category: "MISC" }).success).toBe(false);
   });
 });

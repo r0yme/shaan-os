@@ -79,13 +79,15 @@ Models live in `prisma/schema.prisma`. Current foundation tables:
 | `Invoice` | Billable documents with sequential numbers, client/project links, status lifecycle and tax |
 | `InvoiceItem` | Line items on an invoice (description, quantity, unit price) |
 | `Payment` | Recorded payments against invoices, with method, reference and recorder |
+| `Expense` | Business spending with category, merchant, optional project/client link and recorder |
 
 Enums: `UserKind` (`USER | CLIENT`), `UserStatus` (`ACTIVE | SUSPENDED`),
 `AuditAction` (security events), `ClientStatus`, `ClientKind`, `LeadSource`,
 `LeadStatus`, `ProjectStatus`, `ProjectPriority`, `MilestoneStatus`,
 `TaskStatus`, `TaskPriority`, `InvoiceStatus` (`DRAFT | SENT | PAID | VOID`),
-`PaymentMethod` (`CASH | BANK_TRANSFER | CREDIT_CARD | OTHER`). Import them
-from `src/generated/prisma/enums`.
+`PaymentMethod` (`CASH | BANK_TRANSFER | CREDIT_CARD | OTHER`),
+`ExpenseCategory` (`SOFTWARE | HARDWARE | SERVICES | TRAVEL | MEALS | OFFICE | OTHER`).
+Import them from `src/generated/prisma/enums`.
 
 > **Money is stored in minor units** (cents) everywhere — invoice subtotal,
 > tax and total, line-item prices and payments are integers. Tax is stored as
