@@ -66,6 +66,7 @@ model User {
   requestedApprovals Approval[] @relation("ApprovalRequestor")
   decidedApprovals Approval[] @relation("ApprovalDecider")
   timeEntries TimeEntry[] @relation("TimeEntryUser")
+  createdCalendarEvents CalendarEvent[] @relation("CalendarEventCreator")
 
   @@index([email])
   @@index([kind, status])
@@ -205,6 +206,7 @@ model Client {
   invoices Invoice[]
   expenses Expense[]
   conversations Conversation[]
+  calendarEvents CalendarEvent[] @relation("CalendarEventClient")
 
   @@index([status])
   @@index([accountManagerId])
@@ -306,6 +308,8 @@ model Project {
   expenses Expense[]
 
   conversations Conversation[]
+
+  calendarEvents CalendarEvent[] @relation("CalendarEventProject")
 
   @@index([status])
   @@index([clientId])
@@ -602,6 +606,35 @@ model TimeEntry {
   @@index([userId])
   @@index([taskId])
   @@index([date])
+  @@index([deletedAt])
+}
+
+// ============================================================
+// CALENDAR
+// ============================================================
+
+model CalendarEvent {
+  id          String    @id @default(cuid())
+  title       String
+  description String?   @db.Text
+  location    String?
+  startsAt    DateTime
+  endsAt      DateTime
+  allDay      Boolean   @default(false)
+  projectId   String?
+  project     Project?  @relation("CalendarEventProject", fields: [projectId], references: [id], onDelete: SetNull)
+  clientId    String?
+  client      Client?   @relation("CalendarEventClient", fields: [clientId], references: [id], onDelete: SetNull)
+  createdById String?
+  createdBy   User?     @relation("CalendarEventCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@index([startsAt])
+  @@index([projectId])
+  @@index([clientId])
+  @@index([createdById])
   @@index([deletedAt])
 }
 

@@ -22,6 +22,7 @@ import {
   decideApprovalSchema,
   cancelApprovalSchema,
   timeEntrySchema,
+  calendarEventSchema,
 } from "@/lib/validation";
 import { ValidationError } from "@/lib/errors";
 
@@ -611,5 +612,57 @@ describe("timeEntrySchema", () => {
 
   it("rejects a missing date", () => {
     expect(timeEntrySchema.safeParse({ minutes: 60 }).success).toBe(false);
+  });
+});
+
+describe("calendarEventSchema", () => {
+  it("parses a valid event and coerces datetimes", () => {
+    const result = calendarEventSchema.parse({
+      title: "  Kickoff call  ",
+      startsAt: "2026-08-20T10:00",
+      endsAt: "2026-08-20T11:00",
+    });
+    expect(result.title).toBe("Kickoff call");
+    expect(result.startsAt).toBeInstanceOf(Date);
+    expect(result.allDay).toBe(false);
+    expect(result.projectId).toBeNull();
+  });
+
+  it("keeps an explicit all-day flag", () => {
+    const result = calendarEventSchema.parse({
+      title: "Team offsite",
+      startsAt: "2026-09-01T09:00",
+      endsAt: "2026-09-01T17:00",
+      allDay: true,
+      location: "  ",
+    });
+    expect(result.allDay).toBe(true);
+    expect(result.location).toBeNull();
+  });
+
+  it("rejects an event whose end is not after its start", () => {
+    expect(
+      calendarEventSchema.safeParse({
+        title: "Bad",
+        startsAt: "2026-08-20T11:00",
+        endsAt: "2026-08-20T11:00",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an empty title", () => {
+    expect(
+      calendarEventSchema.safeParse({
+        title: "  ",
+        startsAt: "2026-08-20T10:00",
+        endsAt: "2026-08-20T11:00",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a missing start time", () => {
+    expect(
+      calendarEventSchema.safeParse({ title: "X", endsAt: "2026-08-20T11:00" }).success,
+    ).toBe(false);
   });
 });

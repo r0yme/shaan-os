@@ -320,6 +320,23 @@ export const timeEntrySchema = z.object({
   note: optionalTextSchema(1000, "Note"),
 });
 
+export const calendarEventSchema = z
+  .object({
+    title: z
+      .string()
+      .trim()
+      .min(1, "Event title is required.")
+      .max(120, "Event title must be at most 120 characters."),
+    description: optionalTextSchema(2000, "Description"),
+    location: optionalTextSchema(120, "Location"),
+    startsAt: z.coerce.date(),
+    endsAt: z.coerce.date(),
+    allDay: z.boolean().optional().default(false),
+    projectId: optionalIdSchema,
+    clientId: optionalIdSchema,
+  })
+  .refine((value) => value.endsAt > value.startsAt, "End time must be after the start time.");
+
 export function parseWithZod<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
   if (!result.success) {

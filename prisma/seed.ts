@@ -967,6 +967,68 @@ async function main() {
     });
   }
 
+  console.log("Seeding demo calendar events...");
+  const demoEventTitles = [
+    "Website redesign kickoff",
+    "Fleet dashboard review",
+    "Quarterly planning offsite",
+    "Team standup",
+  ];
+  await prisma.calendarEvent.deleteMany({
+    where: { title: { in: demoEventTitles } },
+  });
+
+  const redesignProject = projectsByName.get("Website Redesign");
+  const fleetProject = projectsByName.get("Fleet Dashboard");
+  const daneClient = await prisma.client.findFirst({ where: { name: "Dane Whitmore" } });
+
+  const demoEvents = [
+    {
+      title: "Website redesign kickoff",
+      description: "Design phase kickoff with the Acme team.",
+      location: "Video call",
+      startsAt: new Date(2026, 7, 18, 10, 0),
+      endsAt: new Date(2026, 7, 18, 11, 0),
+      allDay: false,
+      projectId: redesignProject ?? null,
+      clientId: null,
+      createdById: admin?.id,
+    },
+    {
+      title: "Fleet dashboard review",
+      description: "Walk through the workshop decisions with Dane.",
+      startsAt: new Date(2026, 7, 19, 14, 0),
+      endsAt: new Date(2026, 7, 19, 15, 0),
+      allDay: false,
+      projectId: fleetProject ?? null,
+      clientId: daneClient?.id ?? null,
+      createdById: admin?.id,
+    },
+    {
+      title: "Quarterly planning offsite",
+      description: "All-day planning session.",
+      location: "Meeting room 2",
+      startsAt: new Date(2026, 7, 21, 9, 0),
+      endsAt: new Date(2026, 7, 21, 17, 0),
+      allDay: true,
+      projectId: null,
+      clientId: null,
+      createdById: admin?.id,
+    },
+    {
+      title: "Team standup",
+      startsAt: new Date(2026, 7, 14, 9, 30),
+      endsAt: new Date(2026, 7, 14, 9, 45),
+      allDay: false,
+      projectId: null,
+      clientId: null,
+      createdById: admin?.id,
+    },
+  ];
+  for (const event of demoEvents) {
+    await prisma.calendarEvent.create({ data: event });
+  }
+
   console.log("Seed complete.");
   console.log("");
   console.log("Development credentials (never use in production):");
