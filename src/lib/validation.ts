@@ -369,6 +369,10 @@ export const contractorSchema = z.object({
   projectIds: z.array(idSchema).optional().default([]),
 });
 
+export const notificationActionSchema = z.object({
+  id: idSchema,
+});
+
 export function parseWithZod<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
   if (!result.success) {

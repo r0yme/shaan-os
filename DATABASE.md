@@ -87,6 +87,7 @@ Models live in `prisma/schema.prisma`. Current foundation tables:
 | `CalendarEvent` | Scheduled team event with start/end times, all-day flag, optional project/client links and creator |
 | `SharedFile` | Uploaded file stored on local disk (server-generated key, never the client filename), with optional project/client links and uploader |
 | `Contractor` | External specialist with contact details, specialty and hourly rate, plus a `ContractorProject` join table for many-to-many project assignments |
+| `Notification` | In-app notification targeted at one user, with kind, title/body, optional route link and read marker (soft-deletable) |
 
 Enums: `UserKind` (`USER | CLIENT`), `UserStatus`
 (`ACTIVE | INVITED | SUSPENDED | INACTIVE`),
@@ -97,7 +98,8 @@ Enums: `UserKind` (`USER | CLIENT`), `UserStatus`
 `ExpenseCategory` (`SOFTWARE | HARDWARE | SERVICES | TRAVEL | MEALS | OFFICE | OTHER`),
 `MessageSenderKind` (`USER | CLIENT`),
 `ApprovalType` (`INVOICE | EXPENSE | MILESTONE`), `ApprovalStatus`
-(`PENDING | APPROVED | REJECTED`).
+(`PENDING | APPROVED | REJECTED`), `NotificationKind`
+(`APPROVAL | MESSAGE | TASK | FILE | SYSTEM`).
 Import them from `src/generated/prisma/enums`.
 
 > **Money is stored in minor units** (cents) everywhere — invoice subtotal,

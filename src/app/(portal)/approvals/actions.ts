@@ -12,7 +12,8 @@ import {
   requestApprovalSchema,
 } from "@/lib/validation";
 import { AppError, ConflictError, NotFoundError } from "@/lib/errors";
-import { AuditAction, ApprovalStatus, ApprovalType } from "@/generated/prisma/enums";
+import { AuditAction, ApprovalStatus, ApprovalType, NotificationKind } from "@/generated/prisma/enums";
+import { notify, notifyMany, userIdsWithPermission } from "@/lib/notifications";
 import type { ActionResult } from "@/lib/action-result";
 
 function errorResult(error: unknown, label: string): ActionResult {
@@ -97,6 +98,20 @@ export async function requestApprovalAction(input: unknown): Promise<ActionResul
       entityId: approval.id,
       summary: `Approval requested for ${entity.label}${data.comment ? ` — ${data.comment}` : ""}`,
     });
+
+    const reviewers = await userIdsWithPermission("approvals.manage", user.id);
+    await notifyMany(
+      reviewers.map((reviewerId) => ({
+        userId: reviewerId,
+        kind: NotificationKind.APPROVAL,
+        title: "Approval requested",
+        body: entity.label,
+        link: "/approvals",
+        entityType: "Approval",
+        entityId: approval.id,
+      })),
+    );
+
     revalidatePath("/approvals");
     revalidatePath("/billing/expenses");
     return { ok: true, id: approval.id };
@@ -112,7 +127,7 @@ export async function decideApprovalAction(input: unknown): Promise<ActionResult
 
     const approval = await prisma.approval.findFirst({
       where: { id: data.id, deletedAt: null },
-      select: { type: true, entityId: true },
+      select: { type: true, entityId: true, requestorId: true },
     });
     if (!approval) throw new NotFoundError("Approval request not found.");
 
@@ -137,6 +152,19 @@ export async function decideApprovalAction(input: unknown): Promise<ActionResult
       entityId: data.id,
       summary: `Approval ${data.decision.toLowerCase()} for ${entity.label}`,
     });
+
+    if (approval.requestorId) {
+      await notify({
+        userId: approval.requestorId,
+        kind: NotificationKind.APPROVAL,
+        title: data.decision === "APPROVED" ? "Approval granted" : "Approval rejected",
+        body: entity.label,
+        link: "/approvals",
+        entityType: "Approval",
+        entityId: data.id,
+      });
+    }
+
     revalidatePath("/approvals");
     revalidatePath("/billing/expenses");
     return { ok: true, id: data.id };

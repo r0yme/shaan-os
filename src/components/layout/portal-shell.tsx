@@ -17,6 +17,7 @@ import {
   Calendar,
   FolderOpen,
   MessageSquareText,
+  Bell,
   BadgeCheck,
   Receipt,
   BarChart3,
@@ -29,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 const NAV_ICONS = {
   dashboard: LayoutDashboard,
@@ -42,6 +44,7 @@ const NAV_ICONS = {
   calendar: Calendar,
   files: FolderOpen,
   messages: MessageSquareText,
+  notifications: Bell,
   approvals: BadgeCheck,
   billing: Receipt,
   reports: BarChart3,
@@ -108,9 +111,10 @@ export function PortalShell({
             <p className="truncate text-xs text-muted-foreground">{user.roleKeys.join(", ")}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <NotificationBell allHref="/notifications" align="start" />
           <ThemeToggle />
-          <SignOutButton className="flex-1" />
+          <SignOutButton className="ml-1 flex-1" />
         </div>
       </div>
     </div>

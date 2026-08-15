@@ -8,6 +8,8 @@ import { logger } from "@/lib/logger";
 import { parseWithZod, sharedFileMetadataSchema } from "@/lib/validation";
 import { AppError, ForbiddenError, NotFoundError, ValidationError } from "@/lib/errors";
 import { removeStoredFile, saveUploadBytes, sanitizeFileName } from "@/lib/storage";
+import { NotificationKind } from "@/generated/prisma/enums";
+import { notify } from "@/lib/notifications";
 import type { ActionResult } from "@/lib/action-result";
 
 function errorResult(error: unknown, label: string): ActionResult {
@@ -98,6 +100,23 @@ export async function uploadFileAction(formData: FormData): Promise<ActionResult
       entityId: sharedFile.id,
       summary: `File uploaded: ${sharedFile.name}`,
     });
+    if (data.clientId) {
+      const client = await prisma.client.findFirst({
+        where: { id: data.clientId, deletedAt: null },
+        select: { portalUserId: true, name: true },
+      });
+      if (client?.portalUserId) {
+        await notify({
+          userId: client.portalUserId,
+          kind: NotificationKind.FILE,
+          title: "New file shared with you",
+          body: sharedFile.name,
+          link: "/c/files",
+          entityType: "SharedFile",
+          entityId: sharedFile.id,
+        });
+      }
+    }
     revalidatePath("/files");
     revalidatePath("/c/files");
     return { ok: true, id: sharedFile.id };

@@ -7,7 +7,8 @@ import { recordAudit } from "@/lib/audit";
 import { logger } from "@/lib/logger";
 import { conversationSchema, messageSchema, parseWithZod } from "@/lib/validation";
 import { AppError, NotFoundError } from "@/lib/errors";
-import { MessageSenderKind } from "@/generated/prisma/enums";
+import { MessageSenderKind, NotificationKind } from "@/generated/prisma/enums";
+import { notify } from "@/lib/notifications";
 import type { ActionResult } from "@/lib/action-result";
 
 function errorResult(error: unknown, label: string): ActionResult {
@@ -25,7 +26,7 @@ export async function createConversationAction(input: unknown): Promise<ActionRe
 
     const client = await prisma.client.findFirst({
       where: { id: data.clientId, deletedAt: null },
-      select: { id: true, name: true },
+      select: { id: true, name: true, portalUserId: true },
     });
     if (!client) throw new NotFoundError("Client not found.");
 
@@ -48,6 +49,17 @@ export async function createConversationAction(input: unknown): Promise<ActionRe
       entityId: conversation.id,
       summary: `Conversation started with ${client.name}${data.subject ? `: ${data.subject}` : ""}`,
     });
+    if (client.portalUserId) {
+      await notify({
+        userId: client.portalUserId,
+        kind: NotificationKind.MESSAGE,
+        title: `New message from ${user.name ?? "your team"}`,
+        body: data.subject ?? "You have a new message",
+        link: "/c/messages",
+        entityType: "Conversation",
+        entityId: conversation.id,
+      });
+    }
     revalidatePath("/messages");
     revalidatePath("/c/messages");
     return { ok: true, id: conversation.id };
@@ -63,7 +75,7 @@ export async function sendMessageAction(input: unknown): Promise<ActionResult> {
 
     const conversation = await prisma.conversation.findFirst({
       where: { id: data.conversationId, deletedAt: null },
-      select: { id: true },
+      select: { id: true, client: { select: { name: true, portalUserId: true } } },
     });
     if (!conversation) throw new NotFoundError("Conversation not found.");
 
@@ -81,6 +93,18 @@ export async function sendMessageAction(input: unknown): Promise<ActionResult> {
         data: { lastMessageAt: new Date(), lastTeamReadAt: new Date() },
       }),
     ]);
+
+    if (conversation.client?.portalUserId) {
+      await notify({
+        userId: conversation.client.portalUserId,
+        kind: NotificationKind.MESSAGE,
+        title: `New message from ${user.name ?? "your team"}`,
+        body: data.body.slice(0, 120),
+        link: "/c/messages",
+        entityType: "Conversation",
+        entityId: conversation.id,
+      });
+    }
 
     revalidatePath("/messages");
     revalidatePath("/c/messages");

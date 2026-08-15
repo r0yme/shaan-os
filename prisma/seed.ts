@@ -1164,6 +1164,47 @@ async function main() {
     });
   }
 
+  console.log("Seeding demo notifications...");
+  const demoNotificationTitles = [
+    "Demo — Approval requested",
+    "Demo — New file shared with you",
+    "Demo — Task assigned to you",
+  ];
+  await prisma.notification.deleteMany({ where: { title: { in: demoNotificationTitles } } });
+
+  const clientPortalUser =
+    await prisma.user.findUnique({ where: { email: "client@example.com" } });
+  const demoNotifications = [
+    {
+      userId: admin?.id ?? "",
+      kind: "APPROVAL" as const,
+      title: "Demo — Approval requested",
+      body: "Invoice INV-0001 from Acme Corporation",
+      link: "/approvals",
+      entityType: "Approval",
+    },
+    {
+      userId: admin?.id ?? "",
+      kind: "TASK" as const,
+      title: "Demo — Task assigned to you",
+      body: "Prepare weekly client status report",
+      link: "/tasks",
+      entityType: "Task",
+    },
+    {
+      userId: clientPortalUser?.id ?? "",
+      kind: "FILE" as const,
+      title: "Demo — New file shared with you",
+      body: "website-redesign-brief.txt",
+      link: "/c/files",
+      entityType: "SharedFile",
+    },
+  ];
+  for (const notification of demoNotifications) {
+    if (!notification.userId) continue;
+    await prisma.notification.create({ data: notification });
+  }
+
   console.log("Seed complete.");
   console.log("");
   console.log("Development credentials (never use in production):");

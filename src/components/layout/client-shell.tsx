@@ -8,6 +8,7 @@ import { Logo } from "@/components/logo";
 import { Avatar } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 const CLIENT_NAV = [
   { href: "/c", label: "Overview", icon: Home },
@@ -55,7 +56,8 @@ export function ClientShell({
             );
           })}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <NotificationBell />
           <ThemeToggle />
           <div className="hidden items-center gap-2 sm:flex">
             <Avatar name={user.name} image={user.image} className="h-7 w-7 text-xs" />

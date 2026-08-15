@@ -33,6 +33,7 @@ describe("filterNavForUser", () => {
       "calendar.view",
       "files.view",
       "messages.view",
+      "notifications.view",
       "approvals.view",
       "invoices.view",
       "reports.view",
@@ -126,5 +127,13 @@ describe("filterNavForUser", () => {
 
     const withApprovals = makeUser(["approvals.view"]);
     expect(labels(withApprovals)).toContain("Approvals");
+  });
+
+  it("shows notifications only with the notifications.view permission", () => {
+    const noNotifications = makeUser(["tasks.view"]);
+    expect(labels(noNotifications)).not.toContain("Notifications");
+
+    const withNotifications = makeUser(["notifications.view"]);
+    expect(labels(withNotifications)).toContain("Notifications");
   });
 });

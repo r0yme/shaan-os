@@ -7,6 +7,8 @@ import { recordAudit } from "@/lib/audit";
 import { logger } from "@/lib/logger";
 import { parseWithZod, taskSchema, taskStatusSchema } from "@/lib/validation";
 import { AppError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import { NotificationKind } from "@/generated/prisma/enums";
+import { notify } from "@/lib/notifications";
 import type { CurrentUser } from "@/lib/session";
 import type { ActionResult } from "@/lib/action-result";
 
@@ -73,6 +75,17 @@ export async function createTaskAction(input: unknown): Promise<ActionResult> {
       summary: `Task created: ${task.title}`,
       metadata: { projectId: data.projectId },
     });
+    if (data.assigneeId && data.assigneeId !== user.id) {
+      await notify({
+        userId: data.assigneeId,
+        kind: NotificationKind.TASK,
+        title: "Task assigned to you",
+        body: task.title,
+        link: "/tasks",
+        entityType: "Task",
+        entityId: task.id,
+      });
+    }
     revalidateTaskPaths(data.projectId);
     return { ok: true, id: task.id };
   } catch (error) {
@@ -122,6 +135,17 @@ export async function updateTaskAction(
       summary: `Task updated: ${task.title}`,
       metadata: { projectId: data.projectId },
     });
+    if (data.assigneeId && data.assigneeId !== existing.assigneeId && data.assigneeId !== user.id) {
+      await notify({
+        userId: data.assigneeId,
+        kind: NotificationKind.TASK,
+        title: "Task assigned to you",
+        body: task.title,
+        link: "/tasks",
+        entityType: "Task",
+        entityId: task.id,
+      });
+    }
     revalidateTaskPaths(data.projectId);
     return { ok: true, id: task.id };
   } catch (error) {
