@@ -40,6 +40,7 @@ describe("filterNavForUser", () => {
       "finance.view",
       "audit.view",
       "search.global",
+      "auth.manage",
       "settings.manage",
     ]);
     expect(labels(user)).toEqual(all);
@@ -162,5 +163,13 @@ describe("filterNavForUser", () => {
 
     const withFinance = makeUser(["finance.view"]);
     expect(labels(withFinance)).toContain("Finance");
+  });
+
+  it("shows security only with the auth.manage permission", () => {
+    const noSecurity = makeUser(["tasks.view"]);
+    expect(labels(noSecurity)).not.toContain("Security");
+
+    const withSecurity = makeUser(["auth.manage"]);
+    expect(labels(withSecurity)).toContain("Security");
   });
 });

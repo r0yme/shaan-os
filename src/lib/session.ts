@@ -17,6 +17,7 @@ export interface CurrentUser {
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   const session = await auth();
   if (!session?.user?.id) return null;
+  const tokenVersion = (session as { tokenVersion?: number }).tokenVersion ?? 0;
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -31,6 +32,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     },
   });
   if (!user || user.deletedAt) return null;
+  if (tokenVersion !== user.tokenVersion) return null;
 
   const roleKeys = user.roles.map((r) => r.role.key);
   const permissions = new Set<string>();

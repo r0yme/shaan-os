@@ -83,6 +83,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user?.id) {
         token.sub = user.id;
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { tokenVersion: true },
+        });
+        token.tokenVersion = dbUser?.tokenVersion ?? 0;
       }
       return token;
     },
@@ -90,6 +95,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user && token.sub) {
         session.user.id = token.sub;
       }
+      (session as { tokenVersion?: number }).tokenVersion = token.tokenVersion as number | undefined;
       return session;
     },
   },

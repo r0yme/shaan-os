@@ -62,7 +62,7 @@ Models live in `prisma/schema.prisma`. Current foundation tables:
 
 | Model | Purpose |
 | --- | --- |
-| `User` | Team members (`USER`) and clients (`CLIENT`), credentials, job title, status and lockout state |
+| `User` | Team members (`USER`) and clients (`CLIENT`), credentials, job title, status, lockout state and `tokenVersion` (bumped to force all sessions to sign out) |
 | `Account` / `Session` / `VerificationToken` | Auth.js tables (OAuth accounts, sessions, password reset) |
 | `Role` | Owner / Admin / Project Manager / Employee / Client |
 | `Permission` | Granular capability keys (e.g. `clients.view`, `invoices.create`) |

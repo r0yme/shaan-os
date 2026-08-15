@@ -24,6 +24,7 @@ import {
   BarChart3,
   Coins,
   ScrollText,
+  ShieldCheck,
   Settings,
 } from "lucide-react";
 import type { NavItem, NavIconKey } from "@/config/nav";
@@ -54,6 +55,7 @@ const NAV_ICONS = {
   reports: BarChart3,
   finance: Coins,
   audit: ScrollText,
+  security: ShieldCheck,
   settings: Settings,
 } satisfies Record<NavIconKey, typeof LayoutDashboard>;
 

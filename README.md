@@ -4,14 +4,15 @@ A production-grade, self-hosted business management platform built as a Next.js
 modular monolith. It brings clients, projects, tasks, billing, messaging,
 approvals and AI assistance into one place.
 
-> **Status:** Phase 18 (Finance dashboard) — authentication, RBAC, design system,
+> **Status:** Phase 19 (Security) — authentication, RBAC, design system,
 > the Clients & Leads CRM module, Projects with milestones, a Tasks board,
 > invoicing, payments, expenses, a Team module, reporting & analytics,
 > team↔client messaging, an approvals workflow, time tracking, a shared
 > calendar with a month grid, file sharing with secure downloads, a
 > contractor roster with project assignments, an in-app notification feed,
 > a workspace settings page, an audit log viewer, a workspace-wide search,
-> and an owner-only finance dashboard. The rest arrives later.
+> an owner-only finance dashboard, and a security hub for password resets
+> and forcing a full sign-out. The rest arrives later.
 
 ## Highlights
 
@@ -68,6 +69,10 @@ approvals and AI assistance into one place.
 - **Finance dashboard** — owner-only view of revenue collected, outstanding
   invoices, spending by category and net position, with an unpaid-invoices
   table and recent payments
+- **Security** — owner-only hub that lists every team account with roles and
+  last sign-in, lets you reset any user's password, and can invalidate every
+  active session at once (via per-user `tokenVersion`), plus a personal
+  sign-in activity feed
 - **Billing** — invoices with line items and tax, sequential invoice numbers,
   send/void lifecycle, payment tracking with auto-paid status, outstanding
   balance summaries, expense tracking with category breakdowns, and a

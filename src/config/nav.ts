@@ -19,6 +19,7 @@ export type NavIconKey =
   | "reports"
   | "finance"
   | "audit"
+  | "security"
   | "settings";
 
 export interface NavItem {
@@ -63,6 +64,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/reports", label: "Reports", icon: "reports", permission: "reports.view" },
   { href: "/finance", label: "Finance", icon: "finance", permission: "finance.view" },
   { href: "/audit", label: "Audit", icon: "audit", permission: "audit.view" },
+  { href: "/security", label: "Security", icon: "security", permission: "auth.manage" },
   { href: "/settings", label: "Settings", icon: "settings", permission: "settings.manage" },
 ];
 

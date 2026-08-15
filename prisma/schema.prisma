@@ -43,6 +43,7 @@ model User {
   lastLoginAt      DateTime?
   failedLoginCount Int        @default(0)
   lockedUntil      DateTime?
+  tokenVersion     Int        @default(0)
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
   deletedAt        DateTime?
