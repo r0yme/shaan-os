@@ -11,14 +11,29 @@ import { verifyPassword } from "@/lib/password";
 import { logger } from "@/lib/logger";
 import { recordAudit } from "@/lib/audit";
 import { emailSchema, passwordSchema } from "@/lib/validation";
+import { rateLimit, clearRateLimit } from "@/lib/rate-limit";
 
 const MAX_FAILED_LOGINS = 5;
 const LOCK_DURATION_MS = 15 * 60 * 1000;
+const IP_ATTEMPT_LIMIT = 10;
+const IP_ATTEMPT_WINDOW_MS = 10 * 60 * 1000;
+const FAIL_LIMIT_PER_EMAIL_IP = 2;
+const FAIL_WINDOW_MS = 15 * 60 * 1000;
 
 const credentialSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
 });
+
+function getClientIp(request?: Request): string {
+  if (!request) return "unknown";
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) {
+    const first = forwarded.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  return request.headers.get("x-real-ip") ?? "unknown";
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -34,12 +49,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(rawCredentials) {
+      async authorize(rawCredentials, request) {
         const parsed = credentialSchema.safeParse(rawCredentials);
         if (!parsed.success) {
           return null;
         }
         const { email, password } = parsed.data;
+        const ip = getClientIp(request);
+
+        const ipAllowed = rateLimit({
+          key: `login:ip:${ip}`,
+          limit: IP_ATTEMPT_LIMIT,
+          windowMs: IP_ATTEMPT_WINDOW_MS,
+        });
+        if (!ipAllowed.success) {
+          return null;
+        }
 
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user?.passwordHash || user.deletedAt) {
@@ -54,6 +79,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const valid = await verifyPassword(password, user.passwordHash);
         if (!valid) {
+          const emailIpKey = `login:email-ip:${email}:${ip}`;
+          const failAllowed = rateLimit({
+            key: emailIpKey,
+            limit: FAIL_LIMIT_PER_EMAIL_IP,
+            windowMs: FAIL_WINDOW_MS,
+          });
+          if (!failAllowed.success) {
+            return null;
+          }
           const failed = user.failedLoginCount + 1;
           const shouldLock = failed >= MAX_FAILED_LOGINS;
           await prisma.user
@@ -75,6 +109,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
+        clearRateLimit(`login:email-ip:${email}:${ip}`);
         return { id: user.id, email: user.email, name: user.name, image: user.image };
       },
     }),
