@@ -25,6 +25,7 @@ import {
   Coins,
   ScrollText,
   ShieldCheck,
+  Database,
   Settings,
 } from "lucide-react";
 import type { NavItem, NavIconKey } from "@/config/nav";
@@ -56,6 +57,7 @@ const NAV_ICONS = {
   finance: Coins,
   audit: ScrollText,
   security: ShieldCheck,
+  backup: Database,
   settings: Settings,
 } satisfies Record<NavIconKey, typeof LayoutDashboard>;
 

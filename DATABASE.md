@@ -111,10 +111,17 @@ Import them from `src/generated/prisma/enums`.
 
 ## Backup / restore (pg_dump)
 
+The Backup page (`/backup`, owner-only, `backup.manage` permission) creates
+point-in-time dumps with `pg_dump` (custom format) stored under
+`storage/backups`, and supports download and delete. Configure the binaries
+location via the `PG_BIN` env var (defaults to
+`%LOCALAPPDATA%\PostgreSQL\pgsql\bin`); override the storage dir with
+`BACKUP_DIR`. Restore is not available in the UI yet.
+
+Manual command-line equivalents:
+
 ```powershell
 & "$env:LOCALAPPDATA\PostgreSQL\pgsql\bin\pg_dump.exe" -h 127.0.0.1 -U postgres -d shaan_os > shaan_os_backup.sql
 # restore:
 # & "$env:LOCALAPPDATA\PostgreSQL\pgsql\bin\psql.exe" -h 127.0.0.1 -U postgres -d shaan_os -f shaan_os_backup.sql
 ```
-
-Automated nightly backups are planned (Phase 11, `backup.manage` permission).

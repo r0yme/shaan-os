@@ -41,6 +41,7 @@ describe("filterNavForUser", () => {
       "audit.view",
       "search.global",
       "auth.manage",
+      "backup.manage",
       "settings.manage",
     ]);
     expect(labels(user)).toEqual(all);
@@ -171,5 +172,13 @@ describe("filterNavForUser", () => {
 
     const withSecurity = makeUser(["auth.manage"]);
     expect(labels(withSecurity)).toContain("Security");
+  });
+
+  it("shows backup only with the backup.manage permission", () => {
+    const noBackup = makeUser(["tasks.view"]);
+    expect(labels(noBackup)).not.toContain("Backup");
+
+    const withBackup = makeUser(["backup.manage"]);
+    expect(labels(withBackup)).toContain("Backup");
   });
 });
