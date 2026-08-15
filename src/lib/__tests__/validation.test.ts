@@ -3,9 +3,11 @@ import {
   clientSchema,
   emailSchema,
   leadSchema,
+  milestoneSchema,
   nameSchema,
   passwordSchema,
   parseWithZod,
+  projectSchema,
 } from "@/lib/validation";
 import { ValidationError } from "@/lib/errors";
 
@@ -95,5 +97,69 @@ describe("leadSchema", () => {
 
   it("rejects an unknown status", () => {
     expect(leadSchema.safeParse({ name: "Maria", status: "MAYBE" }).success).toBe(false);
+  });
+});
+
+describe("projectSchema", () => {
+  it("parses a valid project with defaults", () => {
+    const result = projectSchema.parse({ name: "  Website Redesign  " });
+    expect(result.name).toBe("Website Redesign");
+    expect(result.status).toBe("PLANNING");
+    expect(result.priority).toBe("MEDIUM");
+    expect(result.budget).toBeNull();
+    expect(result.clientId).toBeNull();
+    expect(result.managerId).toBeNull();
+  });
+
+  it("parses dates, ids and budget, treating blanks as null", () => {
+    const result = projectSchema.parse({
+      name: "Fleet Dashboard",
+      startDate: "2026-09-01",
+      deadline: "",
+      budget: "1200000",
+      clientId: "",
+      managerId: "cm-user",
+    });
+    expect(result.startDate?.toISOString().slice(0, 10)).toBe("2026-09-01");
+    expect(result.deadline).toBeNull();
+    expect(result.budget).toBe(1200000);
+    expect(result.clientId).toBeNull();
+    expect(result.managerId).toBe("cm-user");
+  });
+
+  it("rejects an unknown status", () => {
+    expect(projectSchema.safeParse({ name: "X", status: "DONE" }).success).toBe(false);
+  });
+
+  it("rejects an invalid date", () => {
+    expect(projectSchema.safeParse({ name: "X", deadline: "not-a-date" }).success).toBe(false);
+  });
+});
+
+describe("milestoneSchema", () => {
+  it("parses a valid milestone with defaults", () => {
+    const result = milestoneSchema.parse({ title: "Launch" });
+    expect(result.title).toBe("Launch");
+    expect(result.status).toBe("PENDING");
+    expect(result.dueDate).toBeNull();
+    expect(result.description).toBeNull();
+  });
+
+  it("parses a completed milestone with a due date", () => {
+    const result = milestoneSchema.parse({
+      title: "Design phase",
+      status: "COMPLETED",
+      dueDate: "2026-07-20",
+    });
+    expect(result.status).toBe("COMPLETED");
+    expect(result.dueDate?.toISOString().slice(0, 10)).toBe("2026-07-20");
+  });
+
+  it("rejects a missing title", () => {
+    expect(milestoneSchema.safeParse({}).success).toBe(false);
+  });
+
+  it("rejects an unknown status", () => {
+    expect(milestoneSchema.safeParse({ title: "X", status: "DONE" }).success).toBe(false);
   });
 });

@@ -64,6 +64,18 @@ export const optionalCentsSchema = z
   .transform((v) => (v === undefined || v === "" ? null : Number(v)))
   .refine((v) => v === null || v <= 1_000_000_000, "Value is too large.");
 
+export const optionalIdSchema = z
+  .string()
+  .trim()
+  .max(64)
+  .optional()
+  .transform((v) => (v === undefined || v === "" ? null : v));
+
+export const optionalDateSchema = z
+  .union([z.literal(""), z.coerce.date()])
+  .optional()
+  .transform((v) => (v === undefined || v === "" ? null : v));
+
 export const clientSchema = z.object({
   name: nameSchema,
   email: optionalEmailSchema,
@@ -87,6 +99,36 @@ export const leadSchema = z.object({
   notes: optionalTextSchema(2000, "Notes"),
   assigneeId: z.string().trim().min(1).max(64).optional(),
   clientId: z.string().trim().min(1).max(64).optional(),
+});
+
+export const projectStatusSchema = z.enum([
+  "PLANNING",
+  "ACTIVE",
+  "ON_HOLD",
+  "COMPLETED",
+  "CANCELLED",
+]);
+export const projectPrioritySchema = z.enum(["LOW", "MEDIUM", "HIGH"]);
+export const milestoneStatusSchema = z.enum(["PENDING", "COMPLETED"]);
+
+export const projectSchema = z.object({
+  name: nameSchema,
+  description: optionalTextSchema(4000, "Description"),
+  status: projectStatusSchema.default("PLANNING"),
+  priority: projectPrioritySchema.default("MEDIUM"),
+  clientId: optionalIdSchema,
+  managerId: optionalIdSchema,
+  budget: optionalCentsSchema,
+  startDate: optionalDateSchema,
+  deadline: optionalDateSchema,
+  notes: optionalTextSchema(2000, "Notes"),
+});
+
+export const milestoneSchema = z.object({
+  title: nameSchema,
+  description: optionalTextSchema(2000, "Description"),
+  status: milestoneStatusSchema.default("PENDING"),
+  dueDate: optionalDateSchema,
 });
 
 export function parseWithZod<T>(schema: z.ZodType<T>, data: unknown): T {

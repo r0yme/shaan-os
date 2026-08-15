@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import { formatDate } from "@/lib/utils";
@@ -7,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
-import { Mail, Phone, Globe, MapPin } from "lucide-react";
+import { FolderKanban, Mail, Phone, Globe, MapPin } from "lucide-react";
+import { ProjectStatusBadge } from "@/components/projects/status-badges";
 
 export const metadata: Metadata = { title: "Overview" };
 
@@ -26,6 +28,14 @@ export default async function ClientDashboardPage() {
       orderBy: { createdAt: "desc" },
     }),
   ]);
+
+  const projects = clientProfile
+    ? await prisma.project.findMany({
+        where: { clientId: clientProfile.id, deletedAt: null },
+        include: { manager: { select: { name: true } } },
+        orderBy: { updatedAt: "desc" },
+      })
+    : [];
 
   const infoRows = [
     { icon: Mail, label: "Email", value: clientProfile?.email ?? "—" },
@@ -102,6 +112,59 @@ export default async function ClientDashboardPage() {
           </span>
         </CardContent>
       </Card>
+
+      <div className="mt-8">
+        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground">
+          <FolderKanban className="h-5 w-5 text-muted-foreground" />
+          Your projects
+        </h2>
+        <DataTable
+          columns={[
+            {
+              key: "name",
+              header: "Project",
+              cell: (project) => (
+                <Link
+                  href={`/c/projects/${project.id}`}
+                  className="font-medium text-foreground hover:underline"
+                >
+                  {project.name}
+                </Link>
+              ),
+            },
+            {
+              key: "status",
+              header: "Status",
+              cell: (project) => <ProjectStatusBadge status={project.status} />,
+            },
+            {
+              key: "manager",
+              header: "Manager",
+              cell: (project) => (
+                <span className="text-muted-foreground">
+                  {project.manager?.name ?? "Unassigned"}
+                </span>
+              ),
+            },
+            {
+              key: "deadline",
+              header: "Deadline",
+              cell: (project) => (
+                <span className="text-muted-foreground">
+                  {project.deadline
+                    ? project.deadline.toLocaleDateString("en-US", { dateStyle: "medium" })
+                    : "—"}
+                </span>
+              ),
+            },
+          ]}
+          data={projects}
+          keyExtractor={(p) => p.id}
+          emptyIcon={FolderKanban}
+          emptyTitle="No projects yet"
+          emptyDescription="Projects your workspace shares with you will appear here."
+        />
+      </div>
 
       <div className="mt-8">
         <h2 className="mb-3 text-lg font-semibold tracking-tight text-foreground">

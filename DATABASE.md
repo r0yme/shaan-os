@@ -73,10 +73,13 @@ Models live in `prisma/schema.prisma`. Current foundation tables:
 | `AuditLog` | Immutable, security-relevant audit events |
 | `Client` | Business/individual customers, lifecycle status, account manager, portal login link |
 | `Lead` | Prospects tracked through the pipeline (NEW → QUALIFIED → PROPOSAL → WON/LOST), deal value in minor units |
+| `Project` | Deliverables with client/manager assignment, status, priority, budget and dates |
+| `Milestone` | Delivery checkpoints within a project (PENDING → COMPLETED) |
 
 Enums: `UserKind` (`USER | CLIENT`), `UserStatus` (`ACTIVE | SUSPENDED`),
 `AuditAction` (security events), `ClientStatus`, `ClientKind`, `LeadSource`,
-`LeadStatus`. Import them from `src/generated/prisma/enums`.
+`LeadStatus`, `ProjectStatus`, `ProjectPriority`, `MilestoneStatus`. Import
+them from `src/generated/prisma/enums`.
 
 ## Backup / restore (pg_dump)
 

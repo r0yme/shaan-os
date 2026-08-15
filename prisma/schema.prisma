@@ -51,9 +51,10 @@ model User {
   sessions  Session[]
   roles     UserRole[]
   auditLogs AuditLog[]
-  clientProfile  Client?  @relation("ClientPortalUser")
-  managedClients Client[] @relation("ClientAccountManager")
-  assignedLeads  Lead[]   @relation("LeadAssignee")
+  clientProfile     Client?   @relation("ClientPortalUser")
+  managedClients    Client[]  @relation("ClientAccountManager")
+  assignedLeads     Lead[]    @relation("LeadAssignee")
+  managedProjects   Project[] @relation("ProjectManager")
 
   @@index([email])
   @@index([kind, status])
@@ -188,7 +189,8 @@ model Client {
   updatedAt        DateTime     @updatedAt
   deletedAt        DateTime?
 
-  leads Lead[]
+  leads    Lead[]
+  projects Project[]
 
   @@index([status])
   @@index([accountManagerId])
@@ -240,6 +242,75 @@ model Lead {
   @@index([clientId])
   @@index([deletedAt])
   @@index([createdAt])
+}
+
+// ============================================================
+// PROJECTS
+// ============================================================
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum ProjectPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Project {
+  id          String         @id @default(cuid())
+  name        String
+  description String?        @db.Text
+  status      ProjectStatus  @default(PLANNING)
+  priority    ProjectPriority @default(MEDIUM)
+  // Owning client, when the work is for an external customer.
+  clientId    String?
+  client      Client?        @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  // Internal owner / delivery lead inside the workspace.
+  managerId   String?
+  manager     User?          @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
+  // Budget in minor units (cents for USD). Null = not estimated.
+  budget      Int?
+  startDate   DateTime?
+  deadline    DateTime?
+  notes       String?        @db.Text
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  deletedAt   DateTime?
+
+  milestones Milestone[]
+
+  @@index([status])
+  @@index([clientId])
+  @@index([managerId])
+  @@index([deletedAt])
+  @@index([createdAt])
+}
+
+enum MilestoneStatus {
+  PENDING
+  COMPLETED
+}
+
+model Milestone {
+  id          String          @id @default(cuid())
+  projectId   String
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String?         @db.Text
+  status      MilestoneStatus @default(PENDING)
+  dueDate     DateTime?
+  completedAt DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([projectId])
+  @@index([status])
 }
 
 // ============================================================

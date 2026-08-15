@@ -417,6 +417,142 @@ async function main() {
     });
   }
 
+  console.log("Seeding demo projects and milestones...");
+  const acmeId = clientIds.get("Acme Corporation");
+  const globexId = clientIds.get("Globex Studios");
+  const daneId = clientIds.get("Dane Whitmore");
+
+  interface DemoMilestone {
+    title: string;
+    description?: string;
+    status: "PENDING" | "COMPLETED";
+    dueDate?: Date;
+  }
+
+  interface DemoProject {
+    name: string;
+    description?: string;
+    status: "PLANNING" | "ACTIVE" | "ON_HOLD" | "COMPLETED" | "CANCELLED";
+    priority: "LOW" | "MEDIUM" | "HIGH";
+    clientId?: string;
+    budget?: number;
+    startDate?: Date;
+    deadline?: Date;
+    notes?: string;
+    milestones: DemoMilestone[];
+  }
+
+  const demoProjects: DemoProject[] = [
+    {
+      name: "Website Redesign",
+      description:
+        "Full redesign of the Acme Corporation marketing website, including a new CMS and content migration.",
+      status: "ACTIVE",
+      priority: "HIGH",
+      clientId: acmeId,
+      budget: 1200000,
+      startDate: new Date("2026-06-01"),
+      deadline: new Date("2026-10-15"),
+      notes: "Weekly status call every Monday. Point of contact: Dana at Acme.",
+      milestones: [
+        { title: "Discovery & audit", status: "COMPLETED", dueDate: new Date("2026-06-15") },
+        { title: "Design phase", status: "COMPLETED", dueDate: new Date("2026-07-20") },
+        { title: "Development", description: "Page templates and CMS build-out.", status: "PENDING", dueDate: new Date("2026-09-15") },
+        { title: "Launch", status: "PENDING", dueDate: new Date("2026-10-15") },
+      ],
+    },
+    {
+      name: "Brand Refresh",
+      description: "Visual identity refresh for Globex Studios, paused after their budget review.",
+      status: "ON_HOLD",
+      priority: "MEDIUM",
+      clientId: globexId,
+      budget: 250000,
+      startDate: new Date("2026-05-01"),
+      deadline: new Date("2026-09-01"),
+      milestones: [
+        { title: "Moodboards", status: "COMPLETED", dueDate: new Date("2026-05-20") },
+      ],
+    },
+    {
+      name: "Internal CRM Tools",
+      description: "In-house tooling to consolidate client records and reporting across teams.",
+      status: "ACTIVE",
+      priority: "HIGH",
+      budget: 900000,
+      startDate: new Date("2026-04-15"),
+      deadline: new Date("2026-08-31"),
+      notes: "Internal project, no client billing.",
+      milestones: [
+        { title: "Backend API", status: "COMPLETED", dueDate: new Date("2026-06-30") },
+        { title: "Admin UI", status: "COMPLETED", dueDate: new Date("2026-07-31") },
+        { title: "Client portal", status: "PENDING", dueDate: new Date("2026-08-31") },
+      ],
+    },
+    {
+      name: "Fleet Dashboard",
+      description: "Fleet management dashboard for Rivera Logistics via Dane Whitmore.",
+      status: "PLANNING",
+      priority: "MEDIUM",
+      clientId: daneId,
+      budget: 1200000,
+      startDate: new Date("2026-09-01"),
+      deadline: new Date("2027-01-31"),
+      milestones: [
+        { title: "Requirements", status: "PENDING", dueDate: new Date("2026-09-20") },
+      ],
+    },
+  ];
+
+  for (const project of demoProjects) {
+    const existing = await prisma.project.findFirst({
+      where: { name: project.name, deletedAt: null },
+    });
+    const data = {
+      name: project.name,
+      description: project.description,
+      status: project.status,
+      priority: project.priority,
+      clientId: project.clientId,
+      managerId: admin?.id,
+      budget: project.budget,
+      startDate: project.startDate,
+      deadline: project.deadline,
+      notes: project.notes,
+    };
+    const record = existing
+      ? await prisma.project.update({ where: { id: existing.id }, data })
+      : await prisma.project.create({ data });
+
+    for (const milestone of project.milestones) {
+      const existingMilestone = await prisma.milestone.findFirst({
+        where: { projectId: record.id, title: milestone.title },
+      });
+      if (existingMilestone) {
+        await prisma.milestone.update({
+          where: { id: existingMilestone.id },
+          data: {
+            description: milestone.description,
+            status: milestone.status,
+            dueDate: milestone.dueDate,
+            completedAt: milestone.status === "COMPLETED" ? new Date() : null,
+          },
+        });
+        continue;
+      }
+      await prisma.milestone.create({
+        data: {
+          projectId: record.id,
+          title: milestone.title,
+          description: milestone.description,
+          status: milestone.status,
+          dueDate: milestone.dueDate,
+          completedAt: milestone.status === "COMPLETED" ? new Date() : null,
+        },
+      });
+    }
+  }
+
   console.log("Seed complete.");
   console.log("");
   console.log("Development credentials (never use in production):");
