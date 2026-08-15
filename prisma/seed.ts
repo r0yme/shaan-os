@@ -1205,6 +1205,47 @@ async function main() {
     await prisma.notification.create({ data: notification });
   }
 
+  console.log("Seeding demo audit entries...");
+  const demoAuditSummaries = [
+    "Demo sign-in",
+    "Demo client created: Acme Corporation",
+    "Demo workspace settings updated",
+  ];
+  await prisma.auditLog.deleteMany({ where: { summary: { in: demoAuditSummaries } } });
+
+  const adminActorId = admin?.id;
+  if (adminActorId) {
+    const now = new Date();
+    await prisma.auditLog.createMany({
+      data: [
+        {
+          actorId: adminActorId,
+          action: "LOGIN",
+          entity: "User",
+          summary: "Demo sign-in",
+          ip: "127.0.0.1",
+          createdAt: new Date(now.getTime() - 2 * 86_400_000),
+        },
+        {
+          actorId: adminActorId,
+          action: "CREATE",
+          entity: "Client",
+          summary: "Demo client created: Acme Corporation",
+          ip: "127.0.0.1",
+          createdAt: new Date(now.getTime() - 1 * 86_400_000),
+        },
+        {
+          actorId: adminActorId,
+          action: "SETTINGS_CHANGE",
+          entity: "BusinessProfile",
+          summary: "Demo workspace settings updated",
+          ip: "127.0.0.1",
+          createdAt: new Date(now.getTime() - 3 * 3_600_000),
+        },
+      ],
+    });
+  }
+
   console.log("Seed complete.");
   console.log("");
   console.log("Development credentials (never use in production):");

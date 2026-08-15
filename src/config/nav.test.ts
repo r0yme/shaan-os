@@ -37,6 +37,7 @@ describe("filterNavForUser", () => {
       "approvals.view",
       "invoices.view",
       "reports.view",
+      "audit.view",
       "settings.manage",
     ]);
     expect(labels(user)).toEqual(all);
@@ -135,5 +136,13 @@ describe("filterNavForUser", () => {
 
     const withNotifications = makeUser(["notifications.view"]);
     expect(labels(withNotifications)).toContain("Notifications");
+  });
+
+  it("shows audit only with the audit.view permission", () => {
+    const noAudit = makeUser(["tasks.view"]);
+    expect(labels(noAudit)).not.toContain("Audit");
+
+    const withAudit = makeUser(["audit.view"]);
+    expect(labels(withAudit)).toContain("Audit");
   });
 });

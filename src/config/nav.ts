@@ -16,6 +16,7 @@ export type NavIconKey =
   | "approvals"
   | "billing"
   | "reports"
+  | "audit"
   | "settings";
 
 export interface NavItem {
@@ -57,6 +58,7 @@ export const NAV_ITEMS: NavItem[] = [
     anyPermission: ["invoices.view", "payments.view", "expenses.view"],
   },
   { href: "/reports", label: "Reports", icon: "reports", permission: "reports.view" },
+  { href: "/audit", label: "Audit", icon: "audit", permission: "audit.view" },
   { href: "/settings", label: "Settings", icon: "settings", permission: "settings.manage" },
 ];
 
