@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ValidationError } from "@/lib/errors";
+import { CURRENCIES, TIMEZONES } from "@/lib/settings";
 
 export const emailSchema = z
   .string()
@@ -371,6 +372,18 @@ export const contractorSchema = z.object({
 
 export const notificationActionSchema = z.object({
   id: idSchema,
+});
+
+export const businessProfileSchema = z.object({
+  name: optionalTextSchema(120, "Business name"),
+  email: optionalEmailSchema,
+  phone: optionalTextSchema(30, "Phone"),
+  website: optionalTextSchema(200, "Website"),
+  address: optionalTextSchema(500, "Address"),
+  country: optionalTextSchema(60, "Country"),
+  currency: z.enum(CURRENCIES).default("USD"),
+  timezone: z.enum(TIMEZONES).default("UTC"),
+  invoicePrefix: optionalTextSchema(8, "Invoice prefix"),
 });
 
 export function parseWithZod<T>(schema: z.ZodType<T>, data: unknown): T {

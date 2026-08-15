@@ -25,6 +25,7 @@ import {
   calendarEventSchema,
   sharedFileMetadataSchema,
   contractorSchema,
+  businessProfileSchema,
 } from "@/lib/validation";
 import { ValidationError } from "@/lib/errors";
 
@@ -760,5 +761,46 @@ describe("contractorSchema", () => {
 
   it("rejects a negative rate", () => {
     expect(contractorSchema.safeParse({ name: "X", rate: "-5" }).success).toBe(false);
+  });
+});
+
+describe("businessProfileSchema", () => {
+  it("applies default currency and timezone", () => {
+    const result = businessProfileSchema.parse({});
+    expect(result.currency).toBe("USD");
+    expect(result.timezone).toBe("UTC");
+    expect(result.invoicePrefix).toBeNull();
+  });
+
+  it("keeps the workspace values", () => {
+    const result = businessProfileSchema.parse({
+      name: "  Shaan Studio  ",
+      email: "hello@shaan.example",
+      phone: "+1 555 000 0000",
+      currency: "BDT",
+      timezone: "Asia/Dhaka",
+      invoicePrefix: "inv",
+    });
+    expect(result.name).toBe("Shaan Studio");
+    expect(result.email).toBe("hello@shaan.example");
+    expect(result.currency).toBe("BDT");
+    expect(result.timezone).toBe("Asia/Dhaka");
+    expect(result.invoicePrefix).toBe("inv");
+  });
+
+  it("rejects an unsupported currency", () => {
+    expect(businessProfileSchema.safeParse({ currency: "XYZ" }).success).toBe(false);
+  });
+
+  it("rejects an unsupported timezone", () => {
+    expect(businessProfileSchema.safeParse({ timezone: "Mars/Olympus" }).success).toBe(false);
+  });
+
+  it("rejects an invalid email", () => {
+    expect(businessProfileSchema.safeParse({ email: "nope" }).success).toBe(false);
+  });
+
+  it("rejects an overlong invoice prefix", () => {
+    expect(businessProfileSchema.safeParse({ invoicePrefix: "ABCDEFGHIJK" }).success).toBe(false);
   });
 });
