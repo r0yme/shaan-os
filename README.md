@@ -4,9 +4,9 @@ A production-grade, self-hosted business management platform built as a Next.js
 modular monolith. It brings clients, projects, tasks, billing, messaging,
 approvals and AI assistance into one place.
 
-> **Status:** Phase 3 (Projects) — authentication, RBAC, design system, the
-> Clients & Leads CRM module, plus Projects with milestones. Tasks and Billing
-> arrive in later phases.
+> **Status:** Phase 4 (Tasks) — authentication, RBAC, design system, the
+> Clients & Leads CRM module, Projects with milestones, plus a Tasks board.
+> Billing and Messaging arrive in later phases.
 
 ## Highlights
 
@@ -20,6 +20,8 @@ approvals and AI assistance into one place.
 - **Projects & Milestones** — project CRUD with client/manager assignment,
   status and priority tracking, milestone breakdowns, and client-facing
   project views in the portal
+- **Tasks board** — kanban board across statuses with project filtering,
+  assignment and due dates, plus read-only task views for clients
 - **Design system** — semantic tokens, light/dark/system themes, reusable UI kit
 - **Logging** — pino (pretty in dev, structured JSON in production)
 - **Health endpoint** — `/api/health` checks database connectivity

@@ -131,6 +131,29 @@ export const milestoneSchema = z.object({
   dueDate: optionalDateSchema,
 });
 
+export const taskStatusSchema = z.enum(["TODO", "IN_PROGRESS", "IN_REVIEW", "DONE"]);
+export const taskPrioritySchema = z.enum(["LOW", "MEDIUM", "HIGH"]);
+
+export const optionalHoursSchema = z
+  .union([
+    z.literal(""),
+    z.string().trim().regex(/^\d+$/, "Hours must be a whole number."),
+  ])
+  .optional()
+  .transform((v) => (v === undefined || v === "" ? null : Number(v)))
+  .refine((v) => v === null || (v >= 1 && v <= 10000), "Hours must be between 1 and 10,000.");
+
+export const taskSchema = z.object({
+  title: nameSchema,
+  description: optionalTextSchema(4000, "Description"),
+  status: taskStatusSchema.default("TODO"),
+  priority: taskPrioritySchema.default("MEDIUM"),
+  projectId: optionalIdSchema,
+  assigneeId: optionalIdSchema,
+  dueDate: optionalDateSchema,
+  estimatedHours: optionalHoursSchema,
+});
+
 export function parseWithZod<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
   if (!result.success) {

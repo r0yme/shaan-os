@@ -8,6 +8,7 @@ import {
   passwordSchema,
   parseWithZod,
   projectSchema,
+  taskSchema,
 } from "@/lib/validation";
 import { ValidationError } from "@/lib/errors";
 
@@ -161,5 +162,46 @@ describe("milestoneSchema", () => {
 
   it("rejects an unknown status", () => {
     expect(milestoneSchema.safeParse({ title: "X", status: "DONE" }).success).toBe(false);
+  });
+});
+
+describe("taskSchema", () => {
+  it("parses a valid task with defaults", () => {
+    const result = taskSchema.parse({ title: "  Homepage hero  " });
+    expect(result.title).toBe("Homepage hero");
+    expect(result.status).toBe("TODO");
+    expect(result.priority).toBe("MEDIUM");
+    expect(result.projectId).toBeNull();
+    expect(result.assigneeId).toBeNull();
+    expect(result.estimatedHours).toBeNull();
+  });
+
+  it("parses assignment, hours and due date, treating blanks as null", () => {
+    const result = taskSchema.parse({
+      title: "Content migration",
+      status: "IN_PROGRESS",
+      priority: "HIGH",
+      projectId: "cm-project",
+      assigneeId: "",
+      dueDate: "2026-09-05",
+      estimatedHours: "20",
+    });
+    expect(result.status).toBe("IN_PROGRESS");
+    expect(result.projectId).toBe("cm-project");
+    expect(result.assigneeId).toBeNull();
+    expect(result.dueDate?.toISOString().slice(0, 10)).toBe("2026-09-05");
+    expect(result.estimatedHours).toBe(20);
+  });
+
+  it("rejects zero hours", () => {
+    expect(taskSchema.safeParse({ title: "X", estimatedHours: "0" }).success).toBe(false);
+  });
+
+  it("rejects an unknown status", () => {
+    expect(taskSchema.safeParse({ title: "X", status: "SHIPPED" }).success).toBe(false);
+  });
+
+  it("rejects a missing title", () => {
+    expect(taskSchema.safeParse({}).success).toBe(false);
   });
 });

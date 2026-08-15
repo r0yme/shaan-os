@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, CircleDollarSign, Flag } from "lucide-react";
+import { ArrowLeft, CalendarDays, CircleDollarSign, Flag, ListTodo } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import { formatDate } from "@/lib/utils";
@@ -13,6 +13,10 @@ import {
   ProjectPriorityBadge,
   MilestoneStatusBadge,
 } from "@/components/projects/status-badges";
+import {
+  TaskStatusBadge,
+  TaskPriorityBadge,
+} from "@/components/tasks/status-badges";
 
 export const metadata: Metadata = { title: "Project" };
 
@@ -40,6 +44,11 @@ export default async function ClientProjectPage({
         include: {
           manager: { select: { id: true, name: true, email: true } },
           milestones: { orderBy: { createdAt: "asc" } },
+          tasks: {
+            where: { deletedAt: null },
+            include: { assignee: { select: { name: true } } },
+            orderBy: { createdAt: "asc" },
+          },
         },
       })
     : null;
@@ -198,6 +207,60 @@ export default async function ClientProjectPage({
           emptyIcon={Flag}
           emptyTitle="No milestones"
           emptyDescription="Milestones for this project will appear here."
+        />
+      </div>
+
+      <div className="mt-8">
+        <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground">
+          <ListTodo className="h-5 w-5 text-muted-foreground" />
+          Tasks
+        </h2>
+        <DataTable
+          columns={[
+            {
+              key: "title",
+              header: "Task",
+              cell: (t) => (
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-foreground">{t.title}</p>
+                  {t.description && (
+                    <p className="truncate text-xs text-muted-foreground">{t.description}</p>
+                  )}
+                </div>
+              ),
+            },
+            {
+              key: "priority",
+              header: "Priority",
+              cell: (t) => <TaskPriorityBadge priority={t.priority} />,
+            },
+            {
+              key: "status",
+              header: "Status",
+              cell: (t) => <TaskStatusBadge status={t.status} />,
+            },
+            {
+              key: "assignee",
+              header: "Assignee",
+              cell: (t) => (
+                <span className="text-muted-foreground">
+                  {t.assignee?.name ?? "Unassigned"}
+                </span>
+              ),
+            },
+            {
+              key: "due",
+              header: "Due date",
+              cell: (t) => (
+                <span className="text-muted-foreground">{dateOnly(t.dueDate)}</span>
+              ),
+            },
+          ]}
+          data={project.tasks}
+          keyExtractor={(t) => t.id}
+          emptyIcon={ListTodo}
+          emptyTitle="No tasks"
+          emptyDescription="Tasks for this project will appear here."
         />
       </div>
     </>

@@ -553,6 +553,103 @@ async function main() {
     }
   }
 
+  console.log("Seeding demo tasks...");
+  const employee = await prisma.user.findUnique({ where: { email: "employee@example.com" } });
+  const projectsByName = new Map<string, string>();
+  for (const project of demoProjects) {
+    const record = await prisma.project.findFirst({
+      where: { name: project.name, deletedAt: null },
+      select: { id: true },
+    });
+    if (record) projectsByName.set(project.name, record.id);
+  }
+
+  interface DemoTask {
+    title: string;
+    description?: string;
+    status: "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
+    priority: "LOW" | "MEDIUM" | "HIGH";
+    projectName?: string;
+    assigneeId?: string;
+    dueDate?: Date;
+    estimatedHours?: number;
+  }
+
+  const demoTasks: DemoTask[] = [
+    {
+      title: "Homepage hero section",
+      description: "Build the new hero with the approved motion design.",
+      status: "IN_PROGRESS",
+      priority: "HIGH",
+      projectName: "Website Redesign",
+      assigneeId: employee?.id,
+      dueDate: new Date("2026-08-20"),
+      estimatedHours: 12,
+    },
+    {
+      title: "Content migration",
+      description: "Move all legacy pages into the new CMS structure.",
+      status: "TODO",
+      priority: "MEDIUM",
+      projectName: "Website Redesign",
+      assigneeId: employee?.id,
+      dueDate: new Date("2026-09-05"),
+      estimatedHours: 20,
+    },
+    {
+      title: "Migrate client records",
+      description: "Consolidate duplicate client records from the old sheet.",
+      status: "IN_REVIEW",
+      priority: "HIGH",
+      projectName: "Internal CRM Tools",
+      assigneeId: admin?.id,
+      dueDate: new Date("2026-08-25"),
+      estimatedHours: 8,
+    },
+    {
+      title: "Design approval sign-off",
+      status: "TODO",
+      priority: "LOW",
+      projectName: "Brand Refresh",
+      assigneeId: admin?.id,
+      dueDate: new Date("2026-09-10"),
+      estimatedHours: 2,
+    },
+    {
+      title: "Requirements workshop notes",
+      description: "Summarise decisions from the fleet dashboard workshop.",
+      status: "DONE",
+      priority: "MEDIUM",
+      projectName: "Fleet Dashboard",
+      assigneeId: admin?.id,
+      dueDate: new Date("2026-08-30"),
+      estimatedHours: 4,
+    },
+  ];
+
+  for (const task of demoTasks) {
+    const existing = await prisma.task.findFirst({
+      where: { title: task.title, deletedAt: null },
+    });
+    const data = {
+      title: task.title,
+      description: task.description,
+      status: task.status,
+      priority: task.priority,
+      projectId: task.projectName ? projectsByName.get(task.projectName) ?? null : null,
+      assigneeId: task.assigneeId,
+      createdById: admin?.id,
+      dueDate: task.dueDate,
+      estimatedHours: task.estimatedHours,
+      completedAt: task.status === "DONE" ? new Date() : null,
+    };
+    if (existing) {
+      await prisma.task.update({ where: { id: existing.id }, data });
+    } else {
+      await prisma.task.create({ data });
+    }
+  }
+
   console.log("Seed complete.");
   console.log("");
   console.log("Development credentials (never use in production):");

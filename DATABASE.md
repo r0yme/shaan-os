@@ -75,11 +75,12 @@ Models live in `prisma/schema.prisma`. Current foundation tables:
 | `Lead` | Prospects tracked through the pipeline (NEW → QUALIFIED → PROPOSAL → WON/LOST), deal value in minor units |
 | `Project` | Deliverables with client/manager assignment, status, priority, budget and dates |
 | `Milestone` | Delivery checkpoints within a project (PENDING → COMPLETED) |
+| `Task` | Work items with status/priority, optional project link, assignee, due date and estimate |
 
 Enums: `UserKind` (`USER | CLIENT`), `UserStatus` (`ACTIVE | SUSPENDED`),
 `AuditAction` (security events), `ClientStatus`, `ClientKind`, `LeadSource`,
-`LeadStatus`, `ProjectStatus`, `ProjectPriority`, `MilestoneStatus`. Import
-them from `src/generated/prisma/enums`.
+`LeadStatus`, `ProjectStatus`, `ProjectPriority`, `MilestoneStatus`,
+`TaskStatus`, `TaskPriority`. Import them from `src/generated/prisma/enums`.
 
 ## Backup / restore (pg_dump)
 
