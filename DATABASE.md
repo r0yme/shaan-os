@@ -80,6 +80,8 @@ Models live in `prisma/schema.prisma`. Current foundation tables:
 | `InvoiceItem` | Line items on an invoice (description, quantity, unit price) |
 | `Payment` | Recorded payments against invoices, with method, reference and recorder |
 | `Expense` | Business spending with category, merchant, optional project/client link and recorder |
+| `Conversation` | Thread between the workspace and a client, with per-side read markers and optional project link |
+| `Message` | A single message in a conversation, tagged with the sender kind (team user or client) |
 
 Enums: `UserKind` (`USER | CLIENT`), `UserStatus`
 (`ACTIVE | INVITED | SUSPENDED | INACTIVE`),
@@ -87,7 +89,8 @@ Enums: `UserKind` (`USER | CLIENT`), `UserStatus`
 `LeadStatus`, `ProjectStatus`, `ProjectPriority`, `MilestoneStatus`,
 `TaskStatus`, `TaskPriority`, `InvoiceStatus` (`DRAFT | SENT | PAID | VOID`),
 `PaymentMethod` (`CASH | BANK_TRANSFER | CREDIT_CARD | OTHER`),
-`ExpenseCategory` (`SOFTWARE | HARDWARE | SERVICES | TRAVEL | MEALS | OFFICE | OTHER`).
+`ExpenseCategory` (`SOFTWARE | HARDWARE | SERVICES | TRAVEL | MEALS | OFFICE | OTHER`),
+`MessageSenderKind` (`USER | CLIENT`).
 Import them from `src/generated/prisma/enums`.
 
 > **Money is stored in minor units** (cents) everywhere — invoice subtotal,

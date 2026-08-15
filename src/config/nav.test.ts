@@ -28,6 +28,7 @@ describe("filterNavForUser", () => {
       "employees.view",
       "projects.view",
       "tasks.view",
+      "messages.view",
       "invoices.view",
       "reports.view",
       "settings.manage",
@@ -72,5 +73,13 @@ describe("filterNavForUser", () => {
 
     const withEmployees = makeUser(["employees.view"]);
     expect(labels(withEmployees)).toContain("Employees");
+  });
+
+  it("shows messages only with the messages.view permission", () => {
+    const noMessages = makeUser(["tasks.view"]);
+    expect(labels(noMessages)).not.toContain("Messages");
+
+    const withMessages = makeUser(["messages.view"]);
+    expect(labels(withMessages)).toContain("Messages");
   });
 });

@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   clientSchema,
+  conversationSchema,
   createEmployeeSchema,
   emailSchema,
   expenseSchema,
   invoiceItemSchema,
   invoiceSchema,
   leadSchema,
+  messageSchema,
   milestoneSchema,
   nameSchema,
   parseWithZod,
@@ -455,6 +457,60 @@ describe("updateEmployeeSchema", () => {
   it("rejects empty role entries", () => {
     expect(
       updateEmployeeSchema.safeParse({ name: "Riya", status: "ACTIVE", roleKeys: ["  "] }).success
+    ).toBe(false);
+  });
+});
+
+describe("messageSchema", () => {
+  it("parses a valid message", () => {
+    const result = messageSchema.parse({
+      conversationId: "cm-convo",
+      body: "  Please send over the updated timeline.  ",
+    });
+    expect(result.conversationId).toBe("cm-convo");
+    expect(result.body).toBe("Please send over the updated timeline.");
+  });
+
+  it("rejects an empty body", () => {
+    expect(messageSchema.safeParse({ conversationId: "cm-convo", body: "  " }).success).toBe(false);
+  });
+
+  it("rejects a body that is too long", () => {
+    expect(
+      messageSchema.safeParse({ conversationId: "cm-convo", body: "x".repeat(4001) }).success,
+    ).toBe(false);
+  });
+});
+
+describe("conversationSchema", () => {
+  it("parses a valid conversation with defaults", () => {
+    const result = conversationSchema.parse({
+      clientId: "cm-client",
+      body: "Welcome aboard!",
+    });
+    expect(result.subject).toBeNull();
+    expect(result.projectId).toBeNull();
+    expect(result.body).toBe("Welcome aboard!");
+  });
+
+  it("parses subject and project link and normalizes empty strings", () => {
+    const result = conversationSchema.parse({
+      clientId: "cm-client",
+      projectId: "",
+      subject: "Website redesign",
+      body: "Kickoff notes.",
+    });
+    expect(result.subject).toBe("Website redesign");
+    expect(result.projectId).toBeNull();
+  });
+
+  it("rejects a missing client", () => {
+    expect(conversationSchema.safeParse({ body: "Hi" }).success).toBe(false);
+  });
+
+  it("rejects an over-long subject", () => {
+    expect(
+      conversationSchema.safeParse({ clientId: "c", subject: "x".repeat(121), body: "Hi" }).success,
     ).toBe(false);
   });
 });

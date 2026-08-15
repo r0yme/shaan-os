@@ -259,6 +259,29 @@ export const createEmployeeSchema = employeeBaseSchema.extend({
 
 export const updateEmployeeSchema = employeeBaseSchema;
 
+export const messageBodySchema = z
+  .string()
+  .trim()
+  .min(1, "Message is required.")
+  .max(4000, "Message must be at most 4000 characters.");
+
+export const messageSchema = z.object({
+  conversationId: idSchema,
+  body: messageBodySchema,
+});
+
+export const conversationSchema = z.object({
+  clientId: idSchema,
+  projectId: optionalIdSchema,
+  subject: z
+    .string()
+    .trim()
+    .max(120, "Subject must be at most 120 characters.")
+    .optional()
+    .transform((value) => (value === undefined || value === "" ? null : value)),
+  body: messageBodySchema,
+});
+
 export function parseWithZod<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
   if (!result.success) {

@@ -61,6 +61,8 @@ model User {
   createdInvoices   Invoice[] @relation("InvoiceCreator")
   recordedPayments  Payment[] @relation("PaymentRecorder")
   recordedExpenses  Expense[] @relation("ExpenseRecorder")
+  createdConversations Conversation[] @relation("ConversationCreator")
+  sentMessages Message[] @relation("MessageSender")
 
   @@index([email])
   @@index([kind, status])
@@ -199,6 +201,7 @@ model Client {
   projects Project[]
   invoices Invoice[]
   expenses Expense[]
+  conversations Conversation[]
 
   @@index([status])
   @@index([accountManagerId])
@@ -298,6 +301,8 @@ model Project {
   invoices Invoice[]
 
   expenses Expense[]
+
+  conversations Conversation[]
 
   @@index([status])
   @@index([clientId])
@@ -483,6 +488,56 @@ model Expense {
   @@index([projectId])
   @@index([clientId])
   @@index([deletedAt])
+}
+
+// ============================================================
+// MESSAGING — CONVERSATIONS & MESSAGES
+// ============================================================
+
+enum MessageSenderKind {
+  USER
+  CLIENT
+}
+
+model Conversation {
+  id               String             @id @default(cuid())
+  subject          String?
+  clientId         String
+  client           Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  projectId        String?
+  project          Project?           @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  createdById      String?
+  createdBy        User?              @relation("ConversationCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  // Denormalized for ordering and per-side unread counts.
+  lastMessageAt    DateTime           @default(now())
+  lastTeamReadAt   DateTime           @default(now())
+  lastClientReadAt DateTime           @default(now())
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  deletedAt        DateTime?
+
+  messages Message[]
+
+  @@index([clientId])
+  @@index([projectId])
+  @@index([lastMessageAt])
+  @@index([deletedAt])
+}
+
+model Message {
+  id             String            @id @default(cuid())
+  conversationId String
+  conversation   Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String?
+  sender         User?             @relation("MessageSender", fields: [senderId], references: [id], onDelete: SetNull)
+  senderKind     MessageSenderKind @default(USER)
+  body           String            @db.Text
+  createdAt      DateTime          @default(now())
+  deletedAt      DateTime?
+
+  @@index([conversationId])
+  @@index([senderKind])
+  @@index([createdAt])
 }
 
 // ============================================================

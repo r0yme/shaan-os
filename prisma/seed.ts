@@ -803,6 +803,75 @@ async function main() {
     });
   }
 
+  console.log("Seeding demo conversations...");
+  const demoConversations: Array<{
+    clientId?: string;
+    subject: string;
+    createdById?: string;
+    messages: Array<{ senderKind: "USER" | "CLIENT"; senderId?: string; body: string }>;
+  }> = [
+    {
+      clientId: acmeId,
+      subject: "Website redesign kickoff",
+      createdById: admin?.id,
+      messages: [
+        {
+          senderKind: "USER",
+          senderId: admin?.id,
+          body: "Hi Dana, welcome! Here is the kickoff agenda for the website redesign.",
+        },
+        {
+          senderKind: "CLIENT",
+          senderId: clientUser?.id,
+          body: "Thanks! We are excited — the design phase progress looks great so far.",
+        },
+        {
+          senderKind: "USER",
+          senderId: admin?.id,
+          body: "We will share the first page templates with you on Friday.",
+        },
+      ],
+    },
+    {
+      clientId: daneId,
+      subject: "Fleet dashboard requirements",
+      createdById: admin?.id,
+      messages: [
+        {
+          senderKind: "USER",
+          senderId: admin?.id,
+          body: "Sharing the workshop notes from Monday so we are aligned before kickoff.",
+        },
+      ],
+    },
+  ];
+
+  for (const conversation of demoConversations) {
+    if (!conversation.clientId) continue;
+    const existing = await prisma.conversation.findFirst({
+      where: { clientId: conversation.clientId, subject: conversation.subject, deletedAt: null },
+    });
+    if (existing) continue;
+
+    const lastMessageAt = new Date(Date.UTC(2026, 7, 10 + conversation.messages.length));
+    await prisma.conversation.create({
+      data: {
+        clientId: conversation.clientId,
+        subject: conversation.subject,
+        createdById: conversation.createdById,
+        lastMessageAt,
+        messages: {
+          create: conversation.messages.map((message, index) => ({
+            senderKind: message.senderKind,
+            senderId: message.senderId,
+            body: message.body,
+            createdAt: new Date(Date.UTC(2026, 7, 10 + index)),
+          })),
+        },
+      },
+    });
+  }
+
   console.log("Seed complete.");
   console.log("");
   console.log("Development credentials (never use in production):");

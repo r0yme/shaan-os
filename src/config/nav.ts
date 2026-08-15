@@ -7,6 +7,7 @@ export type NavIconKey =
   | "employees"
   | "projects"
   | "tasks"
+  | "messages"
   | "billing"
   | "reports"
   | "settings";
@@ -26,6 +27,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/employees", label: "Employees", icon: "employees", permission: "employees.view" },
   { href: "/projects", label: "Projects", icon: "projects", permission: "projects.view" },
   { href: "/tasks", label: "Tasks", icon: "tasks", permission: "tasks.view" },
+  { href: "/messages", label: "Messages", icon: "messages", permission: "messages.view" },
   {
     href: "/billing",
     label: "Billing",
