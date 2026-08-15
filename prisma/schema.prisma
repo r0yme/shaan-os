@@ -65,6 +65,7 @@ model User {
   sentMessages Message[] @relation("MessageSender")
   requestedApprovals Approval[] @relation("ApprovalRequestor")
   decidedApprovals Approval[] @relation("ApprovalDecider")
+  timeEntries TimeEntry[] @relation("TimeEntryUser")
 
   @@index([email])
   @@index([kind, status])
@@ -364,6 +365,7 @@ model Task {
   assignee       User?        @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   createdById    String?
   createdBy      User?        @relation("TaskCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  timeEntries    TimeEntry[]  @relation("TimeEntryTask")
   dueDate        DateTime?
   estimatedHours Int?
   completedAt    DateTime?
@@ -577,6 +579,29 @@ model Approval {
   @@index([status])
   @@index([type])
   @@index([requestorId])
+  @@index([deletedAt])
+}
+
+// ============================================================
+// TIME TRACKING
+// ============================================================
+
+model TimeEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation("TimeEntryUser", fields: [userId], references: [id], onDelete: Cascade)
+  taskId    String?
+  task      Task?    @relation("TimeEntryTask", fields: [taskId], references: [id], onDelete: SetNull)
+  minutes   Int
+  date      DateTime @db.Date
+  note      String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId])
+  @@index([taskId])
+  @@index([date])
   @@index([deletedAt])
 }
 

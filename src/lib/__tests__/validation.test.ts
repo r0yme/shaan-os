@@ -21,6 +21,7 @@ import {
   requestApprovalSchema,
   decideApprovalSchema,
   cancelApprovalSchema,
+  timeEntrySchema,
 } from "@/lib/validation";
 import { ValidationError } from "@/lib/errors";
 
@@ -568,5 +569,47 @@ describe("cancelApprovalSchema", () => {
 
   it("rejects a missing id", () => {
     expect(cancelApprovalSchema.safeParse({}).success).toBe(false);
+  });
+});
+
+describe("timeEntrySchema", () => {
+  it("parses a valid time entry and coerces the date", () => {
+    const result = timeEntrySchema.parse({
+      taskId: "cm-task",
+      date: "2026-08-14",
+      minutes: 90,
+      note: "  Design review call  ",
+    });
+    expect(result.date).toBeInstanceOf(Date);
+    expect(result.minutes).toBe(90);
+    expect(result.note).toBe("Design review call");
+  });
+
+  it("normalizes an empty task id and note", () => {
+    const result = timeEntrySchema.parse({ date: "2026-08-14", minutes: 30 });
+    expect(result.taskId).toBeNull();
+    expect(result.note).toBeNull();
+  });
+
+  it("rejects entries shorter than 15 minutes", () => {
+    expect(
+      timeEntrySchema.safeParse({ date: "2026-08-14", minutes: 10 }).success,
+    ).toBe(false);
+  });
+
+  it("rejects entries over 24 hours", () => {
+    expect(
+      timeEntrySchema.safeParse({ date: "2026-08-14", minutes: 1500 }).success,
+    ).toBe(false);
+  });
+
+  it("rejects fractional minutes", () => {
+    expect(
+      timeEntrySchema.safeParse({ date: "2026-08-14", minutes: 1.5 }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a missing date", () => {
+    expect(timeEntrySchema.safeParse({ minutes: 60 }).success).toBe(false);
   });
 });

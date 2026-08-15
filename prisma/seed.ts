@@ -909,6 +909,64 @@ async function main() {
     });
   }
 
+  console.log("Seeding demo time entries...");
+  const demoTimeNotes = [
+    "Reviewing brand concepts",
+    "Summarising workshop decisions",
+    "Consolidating duplicate client records",
+    "Internal team sync",
+  ];
+  await prisma.timeEntry.deleteMany({ where: { note: { in: demoTimeNotes } } });
+
+  const designTask = await prisma.task.findFirst({ where: { title: "Design approval sign-off" } });
+  const workshopTask = await prisma.task.findFirst({
+    where: { title: "Requirements workshop notes" },
+  });
+  const migrateTask = await prisma.task.findFirst({ where: { title: "Migrate client records" } });
+
+  const demoTimeEntries = [
+    {
+      userId: admin?.id,
+      taskId: designTask?.id ?? null,
+      minutes: 120,
+      date: new Date("2026-08-12"),
+      note: "Reviewing brand concepts",
+    },
+    {
+      userId: employee?.id,
+      taskId: workshopTask?.id ?? null,
+      minutes: 240,
+      date: new Date("2026-08-11"),
+      note: "Summarising workshop decisions",
+    },
+    {
+      userId: employee?.id,
+      taskId: migrateTask?.id ?? null,
+      minutes: 180,
+      date: new Date("2026-08-08"),
+      note: "Consolidating duplicate client records",
+    },
+    {
+      userId: admin?.id,
+      taskId: null,
+      minutes: 60,
+      date: new Date("2026-08-13"),
+      note: "Internal team sync",
+    },
+  ];
+  for (const entry of demoTimeEntries) {
+    if (!entry.userId) continue;
+    await prisma.timeEntry.create({
+      data: {
+        userId: entry.userId,
+        taskId: entry.taskId,
+        minutes: entry.minutes,
+        date: entry.date,
+        note: entry.note,
+      },
+    });
+  }
+
   console.log("Seed complete.");
   console.log("");
   console.log("Development credentials (never use in production):");

@@ -83,6 +83,7 @@ Models live in `prisma/schema.prisma`. Current foundation tables:
 | `Conversation` | Thread between the workspace and a client, with per-side read markers and optional project link |
 | `Message` | A single message in a conversation, tagged with the sender kind (team user or client) |
 | `Approval` | One request per `(type, entityId)` for an invoice, expense or milestone, with requestor, decider and decision metadata |
+| `TimeEntry` | Hours logged by a team member on a given date, optionally linked to a task (minutes stored as whole minutes) |
 
 Enums: `UserKind` (`USER | CLIENT`), `UserStatus`
 (`ACTIVE | INVITED | SUSPENDED | INACTIVE`),

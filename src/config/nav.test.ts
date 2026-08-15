@@ -28,6 +28,7 @@ describe("filterNavForUser", () => {
       "employees.view",
       "projects.view",
       "tasks.view",
+      "time.view",
       "messages.view",
       "approvals.view",
       "invoices.view",
@@ -82,6 +83,14 @@ describe("filterNavForUser", () => {
 
     const withMessages = makeUser(["messages.view"]);
     expect(labels(withMessages)).toContain("Messages");
+  });
+
+  it("shows time only with the time.view permission", () => {
+    const noTime = makeUser(["tasks.view"]);
+    expect(labels(noTime)).not.toContain("Time");
+
+    const withTime = makeUser(["time.view"]);
+    expect(labels(withTime)).toContain("Time");
   });
 
   it("shows approvals only with the approvals.view permission", () => {

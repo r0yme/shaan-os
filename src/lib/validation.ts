@@ -309,6 +309,17 @@ export const cancelApprovalSchema = z.object({
   id: idSchema,
 });
 
+export const timeEntrySchema = z.object({
+  taskId: optionalIdSchema,
+  date: z.coerce.date(),
+  minutes: z
+    .number()
+    .int("Time must be a whole number of minutes.")
+    .min(15, "Time must be at least 15 minutes.")
+    .max(1440, "Time must be at most 24 hours per entry."),
+  note: optionalTextSchema(1000, "Note"),
+});
+
 export function parseWithZod<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
   if (!result.success) {
