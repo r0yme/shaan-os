@@ -2,11 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
   clientSchema,
   emailSchema,
+  invoiceItemSchema,
+  invoiceSchema,
   leadSchema,
   milestoneSchema,
   nameSchema,
   passwordSchema,
   parseWithZod,
+  paymentSchema,
   projectSchema,
   taskSchema,
 } from "@/lib/validation";
@@ -203,5 +206,124 @@ describe("taskSchema", () => {
 
   it("rejects a missing title", () => {
     expect(taskSchema.safeParse({}).success).toBe(false);
+  });
+});
+
+describe("invoiceItemSchema", () => {
+  it("defaults quantity to 1 and empty price to 0", () => {
+    const result = invoiceItemSchema.parse({ description: "Retainer" });
+    expect(result.quantity).toBe(1);
+    expect(result.unitPriceCents).toBe(0);
+  });
+
+  it("coerces string quantity and cents", () => {
+    const result = invoiceItemSchema.parse({
+      description: "Retainer",
+      quantity: "2",
+      unitPriceCents: "150000",
+    });
+    expect(result.quantity).toBe(2);
+    expect(result.unitPriceCents).toBe(150000);
+  });
+
+  it("rejects a non-numeric quantity", () => {
+    expect(
+      invoiceItemSchema.safeParse({ description: "X", quantity: "abc" }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a missing description", () => {
+    expect(invoiceItemSchema.safeParse({ description: "" }).success).toBe(false);
+  });
+});
+
+describe("invoiceSchema", () => {
+  it("parses a valid invoice with defaults", () => {
+    const result = invoiceSchema.parse({
+      items: [{ description: "Retainer", quantity: "1", unitPriceCents: "150000" }],
+    });
+    expect(result.status).toBe("DRAFT");
+    expect(result.taxRateBps).toBe(0);
+    expect(result.clientId).toBeNull();
+    expect(result.dueDate).toBeNull();
+    expect(result.items).toHaveLength(1);
+  });
+
+  it("parses tax rate, dates and optional references", () => {
+    const result = invoiceSchema.parse({
+      clientId: "cm-client",
+      projectId: "cm-project",
+      status: "SENT",
+      issueDate: "2026-07-01",
+      dueDate: "2026-08-01",
+      taxRateBps: "500",
+      items: [
+        { description: "Design", quantity: "1", unitPriceCents: "600000" },
+        { description: "Retainer", quantity: "2", unitPriceCents: "150000" },
+      ],
+    });
+    expect(result.clientId).toBe("cm-client");
+    expect(result.projectId).toBe("cm-project");
+    expect(result.status).toBe("SENT");
+    expect(result.taxRateBps).toBe(500);
+    expect(result.issueDate?.toISOString().slice(0, 10)).toBe("2026-07-01");
+    expect(result.dueDate?.toISOString().slice(0, 10)).toBe("2026-08-01");
+    expect(result.items).toHaveLength(2);
+  });
+
+  it("rejects an invoice without line items", () => {
+    expect(invoiceSchema.safeParse({ items: [] }).success).toBe(false);
+  });
+
+  it("rejects a tax rate over 100%", () => {
+    expect(
+      invoiceSchema.safeParse({
+        taxRateBps: "11000",
+        items: [{ description: "X", unitPriceCents: "1000" }],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an unknown status", () => {
+    expect(
+      invoiceSchema.safeParse({
+        status: "SHIPPED",
+        items: [{ description: "X", unitPriceCents: "1000" }],
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe("paymentSchema", () => {
+  it("parses a valid payment with defaults", () => {
+    const result = paymentSchema.parse({ amountCents: "400000" });
+    expect(result.amountCents).toBe(400000);
+    expect(result.method).toBe("BANK_TRANSFER");
+    expect(result.paidAt).toBeNull();
+    expect(result.reference).toBeNull();
+  });
+
+  it("parses method and paid date", () => {
+    const result = paymentSchema.parse({
+      amountCents: "400000",
+      method: "CREDIT_CARD",
+      paidAt: "2026-06-20",
+      reference: "WIRE-8812",
+    });
+    expect(result.method).toBe("CREDIT_CARD");
+    expect(result.paidAt?.toISOString().slice(0, 10)).toBe("2026-06-20");
+    expect(result.reference).toBe("WIRE-8812");
+  });
+
+  it("rejects a zero payment", () => {
+    expect(paymentSchema.safeParse({ amountCents: "0" }).success).toBe(false);
+  });
+
+  it("rejects a non-numeric amount", () => {
+    expect(paymentSchema.safeParse({ amountCents: "abc" }).success).toBe(false);
+  });
+
+  it("rejects an unknown method", () => {
+    expect(paymentSchema.safeParse({ amountCents: "100", method: "PAYPAL" }).success).toBe(false);
   });
 });

@@ -154,6 +154,65 @@ export const taskSchema = z.object({
   estimatedHours: optionalHoursSchema,
 });
 
+export const invoiceStatusSchema = z.enum(["DRAFT", "SENT", "PAID", "VOID"]);
+export const paymentMethodSchema = z.enum(["CASH", "BANK_TRANSFER", "CREDIT_CARD", "OTHER"]);
+
+export const invoiceItemSchema = z.object({
+  description: nameSchema,
+  quantity: z
+    .union([
+      z.literal(""),
+      z.string().trim().regex(/^\d+$/, "Quantity must be a whole number."),
+    ])
+    .optional()
+    .transform((v) => (v === undefined || v === "" ? 1 : Number(v)))
+    .refine((v) => v >= 1 && v <= 100000, "Quantity must be between 1 and 100,000."),
+  unitPriceCents: z
+    .union([
+      z.literal(""),
+      z.string().trim().regex(/^\d+$/, "Price must be a whole number."),
+    ])
+    .optional()
+    .transform((v) => (v === undefined || v === "" ? 0 : Number(v)))
+    .refine((v) => v >= 0 && v <= 100_000_000_000, "Price is too large."),
+});
+
+export const invoiceSchema = z.object({
+  clientId: optionalIdSchema,
+  projectId: optionalIdSchema,
+  status: invoiceStatusSchema.default("DRAFT"),
+  issueDate: optionalDateSchema,
+  dueDate: optionalDateSchema,
+  // Tax rate in basis points (500 = 5%). Handled as bps to avoid float errors.
+  taxRateBps: z
+    .union([
+      z.literal(""),
+      z.string().trim().regex(/^\d+$/, "Tax rate must be a whole number."),
+    ])
+    .optional()
+    .transform((v) => (v === undefined || v === "" ? 0 : Number(v)))
+    .refine((v) => v >= 0 && v <= 10000, "Tax rate cannot exceed 100%."),
+  notes: optionalTextSchema(2000, "Notes"),
+  items: z
+    .array(invoiceItemSchema)
+    .min(1, "Add at least one line item.")
+    .max(50, "Too many line items."),
+});
+
+export const paymentSchema = z.object({
+  amountCents: z
+    .string()
+    .trim()
+    .regex(/^\d+$/, "Amount must be a whole number.")
+    .transform((v) => Number(v))
+    .refine((v) => v > 0, "Payment amount must be greater than zero.")
+    .refine((v) => v <= 1_000_000_000_000, "Amount is too large."),
+  method: paymentMethodSchema.default("BANK_TRANSFER"),
+  paidAt: optionalDateSchema,
+  reference: optionalTextSchema(100, "Reference"),
+  notes: optionalTextSchema(500, "Notes"),
+});
+
 export function parseWithZod<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
   if (!result.success) {

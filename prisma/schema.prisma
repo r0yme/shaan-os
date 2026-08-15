@@ -57,6 +57,8 @@ model User {
   managedProjects   Project[] @relation("ProjectManager")
   assignedTasks     Task[]    @relation("TaskAssignee")
   createdTasks      Task[]    @relation("TaskCreator")
+  createdInvoices   Invoice[] @relation("InvoiceCreator")
+  recordedPayments  Payment[] @relation("PaymentRecorder")
 
   @@index([email])
   @@index([kind, status])
@@ -193,6 +195,7 @@ model Client {
 
   leads    Lead[]
   projects Project[]
+  invoices Invoice[]
 
   @@index([status])
   @@index([accountManagerId])
@@ -289,6 +292,8 @@ model Project {
 
   tasks Task[]
 
+  invoices Invoice[]
+
   @@index([status])
   @@index([clientId])
   @@index([managerId])
@@ -360,6 +365,85 @@ model Task {
   @@index([assigneeId])
   @@index([deletedAt])
   @@index([createdAt])
+}
+
+// ============================================================
+// BILLING — INVOICES & PAYMENTS
+// ============================================================
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  VOID
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CREDIT_CARD
+  OTHER
+}
+
+model Invoice {
+  id           String        @id @default(cuid())
+  number       String        @unique // e.g. INV-0001
+  clientId     String?
+  client       Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  projectId    String?
+  project      Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  status       InvoiceStatus @default(DRAFT)
+  issueDate    DateTime      @default(now())
+  dueDate      DateTime?
+  // Tax rate in basis points (500 = 5%). Totals are stored for denormalized reads.
+  taxRateBps   Int           @default(0)
+  subtotalCents Int          @default(0)
+  taxCents     Int           @default(0)
+  totalCents   Int           @default(0)
+  notes        String?       @db.Text
+  createdById  String?
+  createdBy    User?         @relation("InvoiceCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+
+  items    InvoiceItem[]
+  payments Payment[]
+
+  @@index([status])
+  @@index([clientId])
+  @@index([projectId])
+  @@index([deletedAt])
+  @@index([createdAt])
+}
+
+model InvoiceItem {
+  id             String  @id @default(cuid())
+  invoiceId      String
+  invoice        Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description    String
+  quantity       Int     @default(1)
+  unitPriceCents Int
+  amountCents    Int
+
+  @@index([invoiceId])
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  invoiceId     String
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amountCents   Int
+  method        PaymentMethod @default(BANK_TRANSFER)
+  paidAt        DateTime      @default(now())
+  reference     String?
+  notes         String?
+  recordedById  String?
+  recordedBy    User?         @relation("PaymentRecorder", fields: [recordedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime      @default(now())
+
+  @@index([invoiceId])
+  @@index([paidAt])
 }
 
 // ============================================================

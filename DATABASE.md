@@ -76,11 +76,23 @@ Models live in `prisma/schema.prisma`. Current foundation tables:
 | `Project` | Deliverables with client/manager assignment, status, priority, budget and dates |
 | `Milestone` | Delivery checkpoints within a project (PENDING → COMPLETED) |
 | `Task` | Work items with status/priority, optional project link, assignee, due date and estimate |
+| `Invoice` | Billable documents with sequential numbers, client/project links, status lifecycle and tax |
+| `InvoiceItem` | Line items on an invoice (description, quantity, unit price) |
+| `Payment` | Recorded payments against invoices, with method, reference and recorder |
 
 Enums: `UserKind` (`USER | CLIENT`), `UserStatus` (`ACTIVE | SUSPENDED`),
 `AuditAction` (security events), `ClientStatus`, `ClientKind`, `LeadSource`,
 `LeadStatus`, `ProjectStatus`, `ProjectPriority`, `MilestoneStatus`,
-`TaskStatus`, `TaskPriority`. Import them from `src/generated/prisma/enums`.
+`TaskStatus`, `TaskPriority`, `InvoiceStatus` (`DRAFT | SENT | PAID | VOID`),
+`PaymentMethod` (`CASH | BANK_TRANSFER | CREDIT_CARD | OTHER`). Import them
+from `src/generated/prisma/enums`.
+
+> **Money is stored in minor units** (cents) everywhere — invoice subtotal,
+> tax and total, line-item prices and payments are integers. Tax is stored as
+> basis points (`taxRateBps`, 500 = 5%). Invoice numbers are generated from
+> `BusinessProfile.invoicePrefix` plus `invoiceNextNumber` (incremented in a
+> transaction). A payment that brings recorded totals to >= the invoice total
+> marks the invoice `PAID`.
 
 ## Backup / restore (pg_dump)
 

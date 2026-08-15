@@ -650,6 +650,125 @@ async function main() {
     }
   }
 
+  console.log("Seeding demo invoices and payments...");
+  interface DemoItem {
+    description: string;
+    quantity: number;
+    unitPriceCents: number;
+  }
+  interface DemoInvoice {
+    number: string;
+    clientId?: string;
+    status: "DRAFT" | "SENT" | "PAID" | "VOID";
+    issueDate: Date;
+    dueDate?: Date;
+    taxRateBps: number;
+    notes?: string;
+    items: DemoItem[];
+    payments?: Array<{ amountCents: number; method: "CASH" | "BANK_TRANSFER" | "CREDIT_CARD" | "OTHER"; paidAt: Date; reference?: string }>;
+  }
+
+  const demoInvoices: DemoInvoice[] = [
+    {
+      number: "INV-0001",
+      clientId: acmeId,
+      status: "SENT",
+      issueDate: new Date("2026-07-01"),
+      dueDate: new Date("2026-08-01"),
+      taxRateBps: 500,
+      notes: "Covers the design phase and July retainer.",
+      items: [
+        { description: "Website redesign — design phase", quantity: 1, unitPriceCents: 600000 },
+        { description: "Monthly retainer — July", quantity: 1, unitPriceCents: 150000 },
+      ],
+    },
+    {
+      number: "INV-0002",
+      clientId: daneId,
+      status: "PAID",
+      issueDate: new Date("2026-06-15"),
+      dueDate: new Date("2026-07-15"),
+      taxRateBps: 0,
+      notes: "One-off consulting engagement.",
+      items: [
+        { description: "Consulting — requirements workshop", quantity: 1, unitPriceCents: 400000 },
+      ],
+      payments: [
+        { amountCents: 400000, method: "BANK_TRANSFER", paidAt: new Date("2026-06-20"), reference: "WIRE-8812" },
+      ],
+    },
+  ];
+
+  for (const invoice of demoInvoices) {
+    const subtotalCents = invoice.items.reduce(
+      (sum, item) => sum + item.quantity * item.unitPriceCents,
+      0,
+    );
+    const taxCents = Math.round((subtotalCents * invoice.taxRateBps) / 10000);
+    const totalCents = subtotalCents + taxCents;
+
+    const record = await prisma.invoice.upsert({
+      where: { number: invoice.number },
+      create: {
+        number: invoice.number,
+        clientId: invoice.clientId,
+        status: invoice.status,
+        issueDate: invoice.issueDate,
+        dueDate: invoice.dueDate,
+        taxRateBps: invoice.taxRateBps,
+        subtotalCents,
+        taxCents,
+        totalCents,
+        notes: invoice.notes,
+        createdById: admin?.id,
+      },
+      update: {
+        clientId: invoice.clientId,
+        status: invoice.status,
+        issueDate: invoice.issueDate,
+        dueDate: invoice.dueDate,
+        taxRateBps: invoice.taxRateBps,
+        subtotalCents,
+        taxCents,
+        totalCents,
+        notes: invoice.notes,
+        createdById: admin?.id,
+      },
+    });
+
+    await prisma.invoiceItem.deleteMany({ where: { invoiceId: record.id } });
+    await prisma.payment.deleteMany({ where: { invoiceId: record.id } });
+
+    for (const item of invoice.items) {
+      await prisma.invoiceItem.create({
+        data: {
+          invoiceId: record.id,
+          description: item.description,
+          quantity: item.quantity,
+          unitPriceCents: item.unitPriceCents,
+          amountCents: item.quantity * item.unitPriceCents,
+        },
+      });
+    }
+    for (const payment of invoice.payments ?? []) {
+      await prisma.payment.create({
+        data: {
+          invoiceId: record.id,
+          amountCents: payment.amountCents,
+          method: payment.method,
+          paidAt: payment.paidAt,
+          reference: payment.reference,
+          recordedById: admin?.id,
+        },
+      });
+    }
+  }
+
+  await prisma.businessProfile.update({
+    where: { id: "default" },
+    data: { invoiceNextNumber: 3 },
+  });
+
   console.log("Seed complete.");
   console.log("");
   console.log("Development credentials (never use in production):");
