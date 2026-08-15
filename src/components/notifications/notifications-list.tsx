@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BadgeCheck, MessageSquareText, ListTodo, FolderOpen, Bell, Trash2 } from "lucide-react";
+import { BadgeCheck, MessageSquareText, ListTodo, FolderOpen, ReceiptText, Bell, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +31,7 @@ const KIND_ICONS: Record<NotificationKind, typeof Bell> = {
   TASK: ListTodo,
   FILE: FolderOpen,
   SYSTEM: Bell,
+  PAYMENT: ReceiptText,
 };
 
 type Filter = "all" | "unread";

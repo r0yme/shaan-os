@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ReceiptText } from "lucide-react";
+import { ReceiptText, Download } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
 import { formatCurrency } from "@/lib/utils";
@@ -111,6 +111,20 @@ export default async function ClientInvoicesPage() {
                 <span className="font-medium text-foreground">
                   {formatCurrency(invoice.totalCents / 100)}
                 </span>
+              ),
+            },
+            {
+              key: "actions",
+              header: "",
+              className: "w-10",
+              cell: (invoice) => (
+                <a
+                  href={`/api/billing/${invoice.id}/pdf`}
+                  aria-label={`Download ${invoice.number}`}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                  <Download className="h-4 w-4" />
+                </a>
               ),
             },
           ]}

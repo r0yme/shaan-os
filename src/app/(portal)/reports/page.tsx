@@ -74,12 +74,14 @@ export default async function ReportsPage({
         select: {
           amountCents: true,
           paidAt: true,
+          client: { select: { id: true, name: true } },
           invoice: {
             select: {
               status: true,
               client: { select: { id: true, name: true } },
             },
           },
+          project: { select: { client: { select: { id: true, name: true } } } },
         },
         orderBy: { paidAt: "asc" },
       }),
@@ -160,13 +162,13 @@ export default async function ReportsPage({
 
   const clientRevenue = new Map<string, { name: string; value: number }>();
   for (const payment of payments) {
-    const client = payment.invoice.client;
-    const key = client?.id ?? "unassigned";
+    const linkedClient = payment.client ?? payment.invoice?.client ?? payment.project?.client ?? null;
+    const key = linkedClient?.id ?? "unassigned";
     const current = clientRevenue.get(key);
     if (current) {
       current.value += payment.amountCents;
     } else {
-      clientRevenue.set(key, { name: client?.name ?? "Unassigned", value: payment.amountCents });
+      clientRevenue.set(key, { name: linkedClient?.name ?? "Unassigned", value: payment.amountCents });
     }
   }
   const clientRows = Array.from(clientRevenue.entries())

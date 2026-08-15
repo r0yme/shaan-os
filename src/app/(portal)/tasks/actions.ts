@@ -7,6 +7,7 @@ import { recordAudit } from "@/lib/audit";
 import { logger } from "@/lib/logger";
 import { parseWithZod, taskSchema, taskStatusSchema } from "@/lib/validation";
 import { AppError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import { canAccessTask } from "@/lib/task-scope";
 import { NotificationKind } from "@/generated/prisma/enums";
 import { notify } from "@/lib/notifications";
 import type { CurrentUser } from "@/lib/session";
@@ -103,9 +104,12 @@ export async function updateTaskAction(
 
     const existing = await prisma.task.findFirst({
       where: { id, deletedAt: null },
-      select: { id: true, assigneeId: true, projectId: true },
+      select: { id: true, assigneeId: true, createdById: true, projectId: true },
     });
     if (!existing) throw new NotFoundError("Task not found.");
+    if (!canAccessTask(user, existing)) {
+      throw new ForbiddenError("You can only update tasks assigned to you.");
+    }
 
     if (data.assigneeId !== existing.assigneeId && !canAssign(user)) {
       throw new ForbiddenError("You need permission to reassign tasks.");
@@ -160,9 +164,12 @@ export async function setTaskStatusAction(id: string, status: string): Promise<A
 
     const existing = await prisma.task.findFirst({
       where: { id, deletedAt: null },
-      select: { id: true, title: true, projectId: true },
+      select: { id: true, title: true, assigneeId: true, createdById: true, projectId: true },
     });
     if (!existing) throw new NotFoundError("Task not found.");
+    if (!canAccessTask(user, existing)) {
+      throw new ForbiddenError("You can only change the status of tasks assigned to you.");
+    }
 
     await prisma.task.update({
       where: { id },
@@ -190,9 +197,12 @@ export async function deleteTaskAction(id: string): Promise<ActionResult> {
 
     const existing = await prisma.task.findFirst({
       where: { id, deletedAt: null },
-      select: { id: true, title: true, projectId: true },
+      select: { id: true, title: true, assigneeId: true, createdById: true, projectId: true },
     });
     if (!existing) throw new NotFoundError("Task not found.");
+    if (!canAccessTask(user, existing)) {
+      throw new ForbiddenError("You can only delete tasks assigned to you.");
+    }
 
     await prisma.task.update({ where: { id }, data: { deletedAt: new Date() } });
 

@@ -30,6 +30,7 @@ type PermissionKey =
   | "milestones.update"
   | "milestones.delete"
   | "tasks.view"
+  | "tasks.view_all"
   | "tasks.create"
   | "tasks.assign"
   | "tasks.update"
@@ -82,7 +83,7 @@ const ALL_PERMISSIONS: PermissionKey[] = [
   "employees.view", "employees.create", "employees.update", "employees.delete",
   "projects.view", "projects.create", "projects.update", "projects.delete",
   "milestones.view", "milestones.create", "milestones.update", "milestones.delete",
-  "tasks.view", "tasks.create", "tasks.assign", "tasks.update", "tasks.delete",
+  "tasks.view", "tasks.view_all", "tasks.create", "tasks.assign", "tasks.update", "tasks.delete",
   "time.view", "time.create", "time.update",
   "messages.view", "messages.send", "messages.delete",
   "files.view", "files.upload", "files.download", "files.delete",
@@ -103,7 +104,7 @@ const ADMIN_PERMISSIONS: PermissionKey[] = [
   "employees.view",
   "projects.view", "projects.create", "projects.update", "projects.delete",
   "milestones.view", "milestones.create", "milestones.update", "milestones.delete",
-  "tasks.view", "tasks.create", "tasks.assign", "tasks.update", "tasks.delete",
+  "tasks.view", "tasks.view_all", "tasks.create", "tasks.assign", "tasks.update", "tasks.delete",
   "time.view", "time.create", "time.update",
   "contractors.view", "contractors.create", "contractors.update", "contractors.delete",
   "messages.view", "messages.send", "messages.delete",
@@ -120,7 +121,7 @@ const PROJECT_MANAGER_PERMISSIONS: PermissionKey[] = [
   "leads.view", "leads.update",
   "projects.view", "projects.create", "projects.update",
   "milestones.view", "milestones.create", "milestones.update", "milestones.delete",
-  "tasks.view", "tasks.create", "tasks.assign", "tasks.update", "tasks.delete",
+  "tasks.view", "tasks.view_all", "tasks.create", "tasks.assign", "tasks.update", "tasks.delete",
   "time.view",
   "messages.view", "messages.send",
   "files.view", "files.upload", "files.download",
@@ -770,6 +771,54 @@ async function main() {
     where: { id: "default" },
     data: { invoiceNextNumber: 3 },
   });
+
+  console.log("Seeding demo project/task payments with proof...");
+  const webProjectId = projectsByName.get("Website Redesign");
+  const heroTask = await prisma.task.findFirst({
+    where: { title: "Homepage hero section", deletedAt: null },
+    select: { id: true },
+  });
+  if (webProjectId) {
+    const demoProjectPaymentRefs = ["DEMO-ACME-PROJECT-2026", "DEMO-ACME-TASK-2026"];
+    const priorPayments = await prisma.payment.findMany({
+      where: { reference: { in: demoProjectPaymentRefs } },
+      select: { id: true, proofStorageKey: true },
+    });
+    for (const prior of priorPayments) {
+      if (prior.proofStorageKey) await removeStoredFile(prior.proofStorageKey);
+      await prisma.payment.delete({ where: { id: prior.id } });
+    }
+
+    const proofBytes = new TextEncoder().encode(
+      [
+        "SHAAN OS - PAYMENT PROOF (demo)",
+        "--------------------------------",
+        "Received from: Acme Corporation",
+        `Payment reference: ${demoProjectPaymentRefs[0]}`,
+        "Date: 2026-07-18",
+        "Note: This is a generated demo proof to showcase uploads.",
+      ].join("\n"),
+    );
+    const proofKey = await saveUploadBytes(new Uint8Array(proofBytes));
+
+    await prisma.payment.create({
+      data: {
+        projectId: webProjectId,
+        taskId: heroTask?.id ?? null,
+        clientId: acmeId,
+        amountCents: 75000,
+        method: "BANK_TRANSFER",
+        paidAt: new Date("2026-07-18"),
+        reference: demoProjectPaymentRefs[0],
+        notes: "Milestone advance for the website redesign.",
+        proofStorageKey: proofKey,
+        proofFileName: "payment-proof-acme.txt",
+        proofMimeType: "text/plain",
+        proofSizeBytes: proofBytes.length,
+        recordedById: clientUser?.id ?? admin?.id,
+      },
+    });
+  }
 
   console.log("Seeding demo expenses...");
   const demoExpenseDescriptions = [

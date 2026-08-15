@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { guardPermission } from "@/lib/page-guard";
+import { visibleTasksWhere } from "@/lib/task-scope";
 import { PageHeading } from "@/components/page-heading";
 import { TasksBoard, type SerializedTask } from "@/components/tasks/tasks-board";
 import { UserKind } from "@/generated/prisma/enums";
@@ -19,6 +20,7 @@ export default async function TasksPage({
     prisma.task.findMany({
       where: {
         deletedAt: null,
+        ...visibleTasksWhere(user),
         ...(project ? { projectId: project } : {}),
       },
       include: {

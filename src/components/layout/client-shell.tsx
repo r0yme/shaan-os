@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, MessageSquareText, ReceiptText, FolderOpen } from "lucide-react";
+import { Home, MessageSquareText, ReceiptText, FolderOpen, Banknote } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
 import { Avatar } from "@/components/ui/avatar";
@@ -14,6 +14,7 @@ const CLIENT_NAV = [
   { href: "/c", label: "Overview", icon: Home },
   { href: "/c/messages", label: "Messages", icon: MessageSquareText },
   { href: "/c/invoices", label: "Invoices", icon: ReceiptText },
+  { href: "/c/payments", label: "Payments", icon: Banknote },
   { href: "/c/files", label: "Files", icon: FolderOpen },
 ];
 

@@ -212,7 +212,30 @@ export const paymentSchema = z.object({
   paidAt: optionalDateSchema,
   reference: optionalTextSchema(100, "Reference"),
   notes: optionalTextSchema(500, "Notes"),
+  invoiceId: optionalIdSchema,
+  projectId: optionalIdSchema,
+  taskId: optionalIdSchema,
+  proofFileName: optionalTextSchema(255, "File name"),
+  proofMimeType: optionalTextSchema(120, "File type"),
+  proofSizeBytes: z
+    .union([z.literal(""), z.coerce.number().int().min(1).max(100 * 1024 * 1024)])
+    .optional()
+    .transform((v) => (v === undefined || v === "" ? null : v)),
 });
+
+/**
+ * A payment must be linked to at least one of invoice, project or task.
+ */
+export const linkedPaymentSchema = paymentSchema.refine(
+  (data) => data.invoiceId || data.projectId || data.taskId,
+  "Link the payment to an invoice, project or task.",
+);
+
+/**
+ * Client-portal payment: must be linked to at least one of invoice,
+ * project or task, and may carry an uploaded proof of payment.
+ */
+export const clientPaymentSchema = linkedPaymentSchema;
 
 export const expenseCategorySchema = z.enum([
   "SOFTWARE",

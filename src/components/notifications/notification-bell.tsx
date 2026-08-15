@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, BadgeCheck, MessageSquareText, ListTodo, FolderOpen, CheckCheck } from "lucide-react";
+import { Bell, BadgeCheck, MessageSquareText, ListTodo, FolderOpen, ReceiptText, CheckCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ const KIND_ICONS: Record<NotificationKind, typeof Bell> = {
   TASK: ListTodo,
   FILE: FolderOpen,
   SYSTEM: Bell,
+  PAYMENT: ReceiptText,
 };
 
 function useNotificationsFeed(open: boolean) {

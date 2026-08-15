@@ -7,6 +7,7 @@ import { recordAudit } from "@/lib/audit";
 import { logger } from "@/lib/logger";
 import { parseWithZod, timeEntrySchema } from "@/lib/validation";
 import { AppError, ForbiddenError, NotFoundError } from "@/lib/errors";
+import { canViewAllTasks } from "@/lib/task-scope";
 import { formatMinutes } from "@/lib/time";
 import type { CurrentUser } from "@/lib/session";
 import type { ActionResult } from "@/lib/action-result";
@@ -19,13 +20,16 @@ function errorResult(error: unknown, label: string): ActionResult {
   return { ok: false, error: "Something went wrong. Please try again." };
 }
 
-async function assertTask(taskId: string | null) {
+async function assertTask(taskId: string | null, userId: string, canViewAll: boolean) {
   if (!taskId) return;
   const task = await prisma.task.findFirst({
     where: { id: taskId, deletedAt: null },
-    select: { id: true },
+    select: { id: true, assigneeId: true, createdById: true },
   });
   if (!task) throw new NotFoundError("The selected task no longer exists.");
+  if (!canViewAll && task.assigneeId !== userId && task.createdById !== userId) {
+    throw new ForbiddenError("You can only log time against tasks assigned to you.");
+  }
 }
 
 function canManageEntry(user: CurrentUser, ownerId: string): boolean {
@@ -36,7 +40,7 @@ export async function logTimeAction(input: unknown): Promise<ActionResult> {
   try {
     const user = await requirePermission("time.create");
     const data = parseWithZod(timeEntrySchema, input);
-    await assertTask(data.taskId);
+    await assertTask(data.taskId, user.id, canViewAllTasks(user));
 
     const entry = await prisma.timeEntry.create({
       data: {
@@ -66,7 +70,7 @@ export async function updateTimeAction(id: string, input: unknown): Promise<Acti
   try {
     const user = await requirePermission("time.update");
     const data = parseWithZod(timeEntrySchema, input);
-    await assertTask(data.taskId);
+    await assertTask(data.taskId, user.id, canViewAllTasks(user));
 
     const existing = await prisma.timeEntry.findFirst({
       where: { id, deletedAt: null },

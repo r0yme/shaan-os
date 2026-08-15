@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Banknote, Pencil, Send, XCircle } from "lucide-react";
+import { Banknote, Download, Pencil, Send, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
@@ -65,6 +65,13 @@ export function InvoiceDetailActions({
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
+        <a
+          href={`/api/billing/${invoiceId}/pdf`}
+          className="inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-border bg-card px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+        >
+          <Download className="h-4 w-4" />
+          Download PDF
+        </a>
         {canRecordPayment && status !== "PAID" && status !== "VOID" && (
           <Button onClick={() => setPaymentsOpen(true)}>
             <Banknote className="h-4 w-4" />

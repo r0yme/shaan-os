@@ -3,9 +3,14 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-export function BillingTabs({ active }: { active: "invoices" | "expenses" }) {
+export function BillingTabs({
+  active,
+}: {
+  active: "invoices" | "expenses" | "payments";
+}) {
   const tabs = [
     { key: "invoices" as const, href: "/billing", label: "Invoices" },
+    { key: "payments" as const, href: "/billing/payments", label: "Payments" },
     { key: "expenses" as const, href: "/billing/expenses", label: "Expenses" },
   ];
 

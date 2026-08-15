@@ -8,14 +8,16 @@ import {
 } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { guardPermission } from "@/lib/page-guard";
-import { formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { PageHeading } from "@/components/page-heading";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
+import { DataTable } from "@/components/ui/data-table";
 import {
   ProjectStatusBadge,
   ProjectPriorityBadge,
 } from "@/components/projects/status-badges";
+import { PaymentMethodBadge } from "@/components/billing/status-badges";
 import { ProjectDetailActions } from "@/components/projects/project-detail-actions";
 import {
   MilestonesPanel,
@@ -51,7 +53,7 @@ export default async function ProjectDetailPage({
 
   if (!project) notFound();
 
-  const [clients, managers] = await Promise.all([
+  const [clients, managers, projectPayments] = await Promise.all([
     prisma.client.findMany({
       where: { deletedAt: null },
       select: { id: true, name: true },
@@ -61,6 +63,21 @@ export default async function ProjectDetailPage({
       where: { kind: UserKind.USER, status: "ACTIVE", deletedAt: null },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
+    }),
+    prisma.payment.findMany({
+      where: {
+        OR: [
+          { projectId: project.id },
+          { task: { projectId: project.id } },
+          { invoice: { projectId: project.id } },
+        ],
+      },
+      include: {
+        invoice: { select: { number: true } },
+        task: { select: { title: true } },
+        recordedBy: { select: { name: true } },
+      },
+      orderBy: { paidAt: "desc" },
     }),
   ]);
 
@@ -153,6 +170,71 @@ export default async function ProjectDetailPage({
               </CardContent>
             </Card>
           )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Payments</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DataTable
+                columns={[
+                  {
+                    key: "amount",
+                    header: "Amount",
+                    cell: (payment) => (
+                      <span className="font-medium text-foreground">
+                        {formatCurrency(payment.amountCents / 100)}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "linked",
+                    header: "Linked to",
+                    cell: (payment) => (
+                      <span className="text-muted-foreground">
+                        {payment.invoice
+                          ? `Invoice ${payment.invoice.number}`
+                          : payment.task
+                            ? payment.task.title
+                            : "Project"}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "method",
+                    header: "Method",
+                    cell: (payment) => <PaymentMethodBadge method={payment.method} />,
+                  },
+                  {
+                    key: "paid",
+                    header: "Paid on",
+                    cell: (payment) => (
+                      <span className="text-muted-foreground">{dateOnly(payment.paidAt)}</span>
+                    ),
+                  },
+                  {
+                    key: "proof",
+                    header: "Proof",
+                    cell: (payment) =>
+                      payment.proofFileName ? (
+                        <a
+                          href={`/api/payments/${payment.id}/proof`}
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          Download
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      ),
+                  },
+                ]}
+                data={projectPayments}
+                keyExtractor={(payment) => payment.id}
+                emptyTitle="No payments on this project"
+                emptyDescription="Payments linked to this project, its tasks or its invoices will appear here."
+              />
+            </CardContent>
+          </Card>
         </div>
 
         <div className="space-y-4">

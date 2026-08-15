@@ -208,6 +208,7 @@ model Client {
   leads    Lead[]
   projects Project[]
   invoices Invoice[]
+  payments Payment[]
   expenses Expense[]
   conversations Conversation[]
   calendarEvents CalendarEvent[] @relation("CalendarEventClient")
@@ -310,6 +311,8 @@ model Project {
 
   invoices Invoice[]
 
+  payments Payment[]
+
   expenses Expense[]
 
   conversations Conversation[]
@@ -379,6 +382,7 @@ model Task {
   createdById    String?
   createdBy      User?        @relation("TaskCreator", fields: [createdById], references: [id], onDelete: SetNull)
   timeEntries    TimeEntry[]  @relation("TimeEntryTask")
+  payments       Payment[]
   dueDate        DateTime?
   estimatedHours Int?
   completedAt    DateTime?
@@ -468,18 +472,34 @@ model InvoiceItem {
 
 model Payment {
   id            String        @id @default(cuid())
-  invoiceId     String
-  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  // A payment must be linked to at least one of: invoice, project or task.
+  invoiceId     String?
+  invoice       Invoice?      @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  projectId     String?
+  project       Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  taskId        String?
+  task          Task?         @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  // Client who made the payment (when recorded from the client portal).
+  clientId      String?
+  client        Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
   amountCents   Int
   method        PaymentMethod @default(BANK_TRANSFER)
   paidAt        DateTime      @default(now())
   reference     String?
   notes         String?
+  // Uploaded proof of payment (e.g. bank slip, screenshot).
+  proofStorageKey String?
+  proofFileName   String?
+  proofMimeType   String?
+  proofSizeBytes  Int?
   recordedById  String?
   recordedBy    User?         @relation("PaymentRecorder", fields: [recordedById], references: [id], onDelete: SetNull)
   createdAt     DateTime      @default(now())
 
   @@index([invoiceId])
+  @@index([projectId])
+  @@index([taskId])
+  @@index([clientId])
   @@index([paidAt])
 }
 
@@ -732,6 +752,7 @@ enum NotificationKind {
   TASK
   FILE
   SYSTEM
+  PAYMENT
 }
 
 model Notification {
