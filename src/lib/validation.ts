@@ -239,6 +239,26 @@ export const expenseSchema = z.object({
   clientId: optionalIdSchema,
 });
 
+export const userStatusSchema = z.enum(["ACTIVE", "INVITED", "SUSPENDED", "INACTIVE"]);
+
+const employeeBaseSchema = z.object({
+  name: nameSchema,
+  phone: optionalTextSchema(30, "Phone"),
+  jobTitle: optionalTextSchema(80, "Job title"),
+  status: userStatusSchema.default("INVITED"),
+  roleKeys: z
+    .array(z.string().trim().min(1, "Role is required."))
+    .min(1, "Assign at least one role.")
+    .max(10, "Too many roles."),
+});
+
+export const createEmployeeSchema = employeeBaseSchema.extend({
+  email: emailSchema,
+  password: passwordSchema,
+});
+
+export const updateEmployeeSchema = employeeBaseSchema;
+
 export function parseWithZod<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
   if (!result.success) {

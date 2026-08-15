@@ -37,6 +37,7 @@ model User {
   image            String?
   passwordHash     String?
   phone            String?
+  jobTitle         String?
   kind             UserKind   @default(USER)
   status           UserStatus @default(INVITED)
   lastLoginAt      DateTime?

@@ -62,7 +62,7 @@ Models live in `prisma/schema.prisma`. Current foundation tables:
 
 | Model | Purpose |
 | --- | --- |
-| `User` | Team members (`USER`) and clients (`CLIENT`), credentials, lockout state |
+| `User` | Team members (`USER`) and clients (`CLIENT`), credentials, job title, status and lockout state |
 | `Account` / `Session` / `VerificationToken` | Auth.js tables (OAuth accounts, sessions, password reset) |
 | `Role` | Owner / Admin / Project Manager / Employee / Client |
 | `Permission` | Granular capability keys (e.g. `clients.view`, `invoices.create`) |
@@ -81,7 +81,8 @@ Models live in `prisma/schema.prisma`. Current foundation tables:
 | `Payment` | Recorded payments against invoices, with method, reference and recorder |
 | `Expense` | Business spending with category, merchant, optional project/client link and recorder |
 
-Enums: `UserKind` (`USER | CLIENT`), `UserStatus` (`ACTIVE | SUSPENDED`),
+Enums: `UserKind` (`USER | CLIENT`), `UserStatus`
+(`ACTIVE | INVITED | SUSPENDED | INACTIVE`),
 `AuditAction` (security events), `ClientStatus`, `ClientKind`, `LeadSource`,
 `LeadStatus`, `ProjectStatus`, `ProjectPriority`, `MilestoneStatus`,
 `TaskStatus`, `TaskPriority`, `InvoiceStatus` (`DRAFT | SENT | PAID | VOID`),

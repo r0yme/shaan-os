@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   clientSchema,
+  createEmployeeSchema,
   emailSchema,
   expenseSchema,
   invoiceItemSchema,
@@ -8,11 +9,13 @@ import {
   leadSchema,
   milestoneSchema,
   nameSchema,
-  passwordSchema,
   parseWithZod,
+  passwordSchema,
   paymentSchema,
   projectSchema,
   taskSchema,
+  updateEmployeeSchema,
+  userStatusSchema,
 } from "@/lib/validation";
 import { ValidationError } from "@/lib/errors";
 
@@ -365,5 +368,93 @@ describe("expenseSchema", () => {
 
   it("rejects an unknown category", () => {
     expect(expenseSchema.safeParse({ amountCents: "100", category: "MISC" }).success).toBe(false);
+  });
+});
+
+describe("userStatusSchema", () => {
+  it("accepts each employee status", () => {
+    for (const status of ["ACTIVE", "INVITED", "SUSPENDED", "INACTIVE"]) {
+      expect(userStatusSchema.safeParse(status).success).toBe(true);
+    }
+  });
+
+  it("rejects an unknown status", () => {
+    expect(userStatusSchema.safeParse("DELETED").success).toBe(false);
+  });
+});
+
+describe("createEmployeeSchema", () => {
+  it("parses a valid employee with defaults", () => {
+    const result = createEmployeeSchema.parse({
+      name: "  Riya Sharma  ",
+      email: "riya@example.com",
+      password: "Password123!",
+      roleKeys: ["EMPLOYEE"],
+    });
+    expect(result.name).toBe("Riya Sharma");
+    expect(result.email).toBe("riya@example.com");
+    expect(result.status).toBe("INVITED");
+    expect(result.phone).toBeNull();
+    expect(result.jobTitle).toBeNull();
+  });
+
+  it("rejects an invalid email", () => {
+    expect(
+      createEmployeeSchema.safeParse({
+        name: "Riya",
+        email: "not-an-email",
+        password: "Password123!",
+        roleKeys: ["EMPLOYEE"],
+      }).success
+    ).toBe(false);
+  });
+
+  it("rejects a weak password", () => {
+    expect(
+      createEmployeeSchema.safeParse({
+        name: "Riya",
+        email: "riya@example.com",
+        password: "short",
+        roleKeys: ["EMPLOYEE"],
+      }).success
+    ).toBe(false);
+  });
+
+  it("rejects an unknown status", () => {
+    expect(
+      createEmployeeSchema.safeParse({
+        name: "Riya",
+        email: "riya@example.com",
+        password: "Password123!",
+        roleKeys: ["EMPLOYEE"],
+        status: "DELETED",
+      }).success
+    ).toBe(false);
+  });
+});
+
+describe("updateEmployeeSchema", () => {
+  it("parses a valid update", () => {
+    const result = updateEmployeeSchema.parse({
+      name: "Riya Sharma",
+      phone: "555-0100",
+      jobTitle: "Designer",
+      status: "ACTIVE",
+      roleKeys: ["EMPLOYEE", "PROJECT_MANAGER"],
+    });
+    expect(result.jobTitle).toBe("Designer");
+    expect(result.roleKeys).toEqual(["EMPLOYEE", "PROJECT_MANAGER"]);
+  });
+
+  it("rejects empty roleKeys", () => {
+    expect(
+      updateEmployeeSchema.safeParse({ name: "Riya", status: "ACTIVE", roleKeys: [] }).success
+    ).toBe(false);
+  });
+
+  it("rejects empty role entries", () => {
+    expect(
+      updateEmployeeSchema.safeParse({ name: "Riya", status: "ACTIVE", roleKeys: ["  "] }).success
+    ).toBe(false);
   });
 });

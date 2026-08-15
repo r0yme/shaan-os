@@ -25,6 +25,7 @@ describe("filterNavForUser", () => {
     const user = makeUser([
       "clients.view",
       "leads.view",
+      "employees.view",
       "projects.view",
       "tasks.view",
       "invoices.view",
@@ -63,5 +64,13 @@ describe("filterNavForUser", () => {
 
     const withLeads = makeUser(["leads.view"]);
     expect(labels(withLeads)).toContain("Leads");
+  });
+
+  it("shows employees only with the employees.view permission", () => {
+    const noEmployees = makeUser(["clients.view"]);
+    expect(labels(noEmployees)).not.toContain("Employees");
+
+    const withEmployees = makeUser(["employees.view"]);
+    expect(labels(withEmployees)).toContain("Employees");
   });
 });
