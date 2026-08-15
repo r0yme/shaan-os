@@ -4,7 +4,7 @@ A production-grade, self-hosted business management platform built as a Next.js
 modular monolith. It brings clients, projects, tasks, billing, messaging,
 approvals and AI assistance into one place.
 
-> **Status:** Phase 20 (Backup) — authentication, RBAC, design system,
+> **Status:** Phase 21 (AI Assistant) — authentication, RBAC, design system,
 > the Clients & Leads CRM module, Projects with milestones, a Tasks board,
 > invoicing, payments, expenses, a Team module, reporting & analytics,
 > team↔client messaging, an approvals workflow, time tracking, a shared
@@ -12,8 +12,9 @@ approvals and AI assistance into one place.
 > contractor roster with project assignments, an in-app notification feed,
 > a workspace settings page, an audit log viewer, a workspace-wide search,
 > an owner-only finance dashboard, a security hub for password resets and
-> forcing a full sign-out, and owner-managed database backups. All five
-> planned "remaining modules" are now shipped.
+> forcing a full sign-out, owner-managed database backups, and an AI
+> assistant (chat, drafts, summaries, lead scoring) powered by Gemini or
+> OpenRouter free models. All five planned "remaining modules" are shipped.
 
 ## Highlights
 
@@ -77,6 +78,13 @@ approvals and AI assistance into one place.
 - **Backup** — owner-managed `pg_dump` snapshots: create, list, download and
   delete point-in-time `.dump` files from the Backup page (restore comes in a
   later version)
+- **AI Assistant** — owner-only `/assistant` page that chats with your
+  workspace data, drafts emails/updates, summarizes a client/project and
+  scores leads (0–100 with strengths, risks and next steps). Streaming
+  responses via `streamText`, structured scoring via `generateObject`, both
+  rate-limited. Provider-agnostic: Google Gemini (free tier) or OpenRouter
+  (free `:free` model variants) behind an `AI_PROVIDER` switch, with context
+  built from live client/project/lead data
 - **Billing** — invoices with line items and tax, sequential invoice numbers,
   send/void lifecycle, payment tracking with auto-paid status, outstanding
   balance summaries, expense tracking with category breakdowns, and a
@@ -84,7 +92,7 @@ approvals and AI assistance into one place.
 - **Design system** — semantic tokens, light/dark/system themes, reusable UI kit
 - **Logging** — pino (pretty in dev, structured JSON in production)
 - **Health endpoint** — `/api/health` checks database connectivity
-- **Tests** — Vitest for validation, password, rate limiting and nav RBAC logic
+- **Tests** — Vitest for validation, password, rate limiting, nav RBAC and AI logic
 
 ## Tech stack
 
@@ -179,6 +187,12 @@ npm run dev              # http://localhost:3000
   these to safe HTTP responses without leaking internals.
 - **Audit**: `recordAudit()` writes immutable audit events for security-sensitive
   actions (login, logout, etc.).
+- **AI**: `src/lib/ai.ts` is the provider layer (`google` | `openrouter`).
+  Enable with `AI_ENABLED=true` plus the matching API key in `.env`
+  (`GOOGLE_GENERATIVE_AI_API_KEY` for Gemini, `OPENROUTER_API_KEY` for
+  OpenRouter; `AI_MODEL` overrides the default). The `/api/ai/chat` route
+  streams text and `/api/ai/lead-score` returns structured JSON; both require
+  the `ai.use` permission (Owner role) and are rate-limited.
 
 ## License
 

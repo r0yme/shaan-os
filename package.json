@@ -14,9 +14,12 @@
     "db:stop": "powershell -ExecutionPolicy Bypass -File scripts/db-stop.ps1"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.44",
+    "@ai-sdk/openai-compatible": "^3.0.30",
     "@auth/prisma-adapter": "^2.11.3",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "ai": "^7.0.66",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "lucide-react": "^1.31.0",

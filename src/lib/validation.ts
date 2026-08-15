@@ -393,3 +393,24 @@ export function parseWithZod<T>(schema: z.ZodType<T>, data: unknown): T {
   }
   return result.data;
 }
+
+export const aiModeSchema = z.enum(["chat", "draft", "summary", "score"]);
+
+export const aiEntityTypeSchema = z.enum(["client", "project", "lead"]);
+
+export const aiMessageSchema = z
+  .string()
+  .trim()
+  .min(1, "Message is required.")
+  .max(4000, "Message is too long.");
+
+export const aiChatSchema = z.object({
+  mode: aiModeSchema,
+  message: aiMessageSchema,
+  entityType: aiEntityTypeSchema.optional(),
+  entityId: idSchema.optional(),
+});
+
+export const aiLeadScoreSchema = z.object({
+  leadId: idSchema,
+});

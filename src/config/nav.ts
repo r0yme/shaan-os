@@ -21,6 +21,7 @@ export type NavIconKey =
   | "audit"
   | "security"
   | "backup"
+  | "assistant"
   | "settings";
 
 export interface NavItem {
@@ -67,6 +68,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/audit", label: "Audit", icon: "audit", permission: "audit.view" },
   { href: "/security", label: "Security", icon: "security", permission: "auth.manage" },
   { href: "/backup", label: "Backup", icon: "backup", permission: "backup.manage" },
+  { href: "/assistant", label: "Assistant", icon: "assistant", permission: "ai.use" },
   { href: "/settings", label: "Settings", icon: "settings", permission: "settings.manage" },
 ];
 

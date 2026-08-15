@@ -42,6 +42,7 @@ describe("filterNavForUser", () => {
       "search.global",
       "auth.manage",
       "backup.manage",
+      "ai.use",
       "settings.manage",
     ]);
     expect(labels(user)).toEqual(all);
@@ -180,5 +181,13 @@ describe("filterNavForUser", () => {
 
     const withBackup = makeUser(["backup.manage"]);
     expect(labels(withBackup)).toContain("Backup");
+  });
+
+  it("shows assistant only with the ai.use permission", () => {
+    const noAssistant = makeUser(["tasks.view"]);
+    expect(labels(noAssistant)).not.toContain("Assistant");
+
+    const withAssistant = makeUser(["ai.use"]);
+    expect(labels(withAssistant)).toContain("Assistant");
   });
 });

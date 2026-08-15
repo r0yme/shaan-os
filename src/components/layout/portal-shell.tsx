@@ -26,6 +26,7 @@ import {
   ScrollText,
   ShieldCheck,
   Database,
+  Sparkles,
   Settings,
 } from "lucide-react";
 import type { NavItem, NavIconKey } from "@/config/nav";
@@ -58,6 +59,7 @@ const NAV_ICONS = {
   audit: ScrollText,
   security: ShieldCheck,
   backup: Database,
+  assistant: Sparkles,
   settings: Settings,
 } satisfies Record<NavIconKey, typeof LayoutDashboard>;
 
