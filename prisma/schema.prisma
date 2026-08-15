@@ -67,6 +67,7 @@ model User {
   decidedApprovals Approval[] @relation("ApprovalDecider")
   timeEntries TimeEntry[] @relation("TimeEntryUser")
   createdCalendarEvents CalendarEvent[] @relation("CalendarEventCreator")
+  uploadedFiles SharedFile[] @relation("SharedFileUploader")
 
   @@index([email])
   @@index([kind, status])
@@ -207,6 +208,7 @@ model Client {
   expenses Expense[]
   conversations Conversation[]
   calendarEvents CalendarEvent[] @relation("CalendarEventClient")
+  files SharedFile[] @relation("SharedFileClient")
 
   @@index([status])
   @@index([accountManagerId])
@@ -310,6 +312,8 @@ model Project {
   conversations Conversation[]
 
   calendarEvents CalendarEvent[] @relation("CalendarEventProject")
+
+  files SharedFile[] @relation("SharedFileProject")
 
   @@index([status])
   @@index([clientId])
@@ -636,6 +640,36 @@ model CalendarEvent {
   @@index([clientId])
   @@index([createdById])
   @@index([deletedAt])
+}
+
+// ============================================================
+// FILE SHARING
+// ============================================================
+
+model SharedFile {
+  id           String   @id @default(cuid())
+  // Original filename shown in the UI; never used for disk paths.
+  name         String
+  // Relative path under the storage root on disk (server-generated).
+  storageKey   String   @unique
+  mimeType     String?
+  // Size in bytes.
+  size         Int
+  projectId    String?
+  project      Project? @relation("SharedFileProject", fields: [projectId], references: [id], onDelete: SetNull)
+  clientId     String?
+  client       Client?  @relation("SharedFileClient", fields: [clientId], references: [id], onDelete: SetNull)
+  uploadedById String?
+  uploadedBy   User?    @relation("SharedFileUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+
+  @@index([projectId])
+  @@index([clientId])
+  @@index([uploadedById])
+  @@index([deletedAt])
+  @@index([createdAt])
 }
 
 // ============================================================

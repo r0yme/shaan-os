@@ -23,6 +23,7 @@ import {
   cancelApprovalSchema,
   timeEntrySchema,
   calendarEventSchema,
+  sharedFileMetadataSchema,
 } from "@/lib/validation";
 import { ValidationError } from "@/lib/errors";
 
@@ -664,5 +665,49 @@ describe("calendarEventSchema", () => {
     expect(
       calendarEventSchema.safeParse({ title: "X", endsAt: "2026-08-20T11:00" }).success,
     ).toBe(false);
+  });
+});
+
+describe("sharedFileMetadataSchema", () => {
+  it("accepts a minimal upload", () => {
+    const result = sharedFileMetadataSchema.parse({
+      name: "report.pdf",
+      size: 1024,
+    });
+    expect(result.name).toBe("report.pdf");
+    expect(result.mimeType).toBeNull();
+    expect(result.projectId).toBeNull();
+    expect(result.clientId).toBeNull();
+  });
+
+  it("trims the filename and keeps optional links", () => {
+    const result = sharedFileMetadataSchema.parse({
+      name: "  brief v2.docx  ",
+      size: 2048,
+      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      projectId: "proj_1",
+      clientId: "client_1",
+    });
+    expect(result.name).toBe("brief v2.docx");
+    expect(result.projectId).toBe("proj_1");
+    expect(result.clientId).toBe("client_1");
+  });
+
+  it("rejects an empty filename", () => {
+    expect(sharedFileMetadataSchema.safeParse({ name: "  ", size: 10 }).success).toBe(false);
+  });
+
+  it("rejects a negative size", () => {
+    expect(sharedFileMetadataSchema.safeParse({ name: "x", size: -1 }).success).toBe(false);
+  });
+
+  it("rejects an oversized file", () => {
+    expect(
+      sharedFileMetadataSchema.safeParse({ name: "big.bin", size: 25 * 1024 * 1024 + 1 }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a non-integer size", () => {
+    expect(sharedFileMetadataSchema.safeParse({ name: "x", size: 1.5 }).success).toBe(false);
   });
 });

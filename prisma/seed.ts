@@ -1,7 +1,8 @@
-import "dotenv/config";
+﻿import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { hashPassword } from "../src/lib/password";
+import { removeStoredFile, saveUploadBytes } from "../src/lib/storage";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL ?? "" });
 const prisma = new PrismaClient({ adapter });
@@ -374,7 +375,7 @@ async function main() {
       notes: "Needs e-commerce platform migration.",
     },
     {
-      name: "Tomás Rivera",
+      name: "TomÃ¡s Rivera",
       email: "tomas.rivera@example.com",
       company: "Rivera Logistics",
       source: "EMAIL" as const,
@@ -678,8 +679,8 @@ async function main() {
       taxRateBps: 500,
       notes: "Covers the design phase and July retainer.",
       items: [
-        { description: "Website redesign — design phase", quantity: 1, unitPriceCents: 600000 },
-        { description: "Monthly retainer — July", quantity: 1, unitPriceCents: 150000 },
+        { description: "Website redesign â€” design phase", quantity: 1, unitPriceCents: 600000 },
+        { description: "Monthly retainer â€” July", quantity: 1, unitPriceCents: 150000 },
       ],
     },
     {
@@ -691,7 +692,7 @@ async function main() {
       taxRateBps: 0,
       notes: "One-off consulting engagement.",
       items: [
-        { description: "Consulting — requirements workshop", quantity: 1, unitPriceCents: 400000 },
+        { description: "Consulting â€” requirements workshop", quantity: 1, unitPriceCents: 400000 },
       ],
       payments: [
         { amountCents: 400000, method: "BANK_TRANSFER", paidAt: new Date("2026-06-20"), reference: "WIRE-8812" },
@@ -772,19 +773,19 @@ async function main() {
   console.log("Seeding demo expenses...");
   const demoExpenseDescriptions = [
     "Hosting + monitoring (6 months)",
-    "Figma subscription — Q3",
+    "Figma subscription â€” Q3",
     "External monitor + laptop stand",
-    "Client site visit — taxi",
+    "Client site visit â€” taxi",
     "Team lunch after kickoff",
-    "Accounting services — quarterly",
+    "Accounting services â€” quarterly",
   ];
   const demoExpenses = [
     { description: "Hosting + monitoring (6 months)", amountCents: 120000, category: "SOFTWARE" as const, merchant: "Vercel", incurredAt: new Date("2026-07-05") },
-    { description: "Figma subscription — Q3", amountCents: 24000, category: "SOFTWARE" as const, merchant: "Figma", incurredAt: new Date("2026-07-02") },
+    { description: "Figma subscription â€” Q3", amountCents: 24000, category: "SOFTWARE" as const, merchant: "Figma", incurredAt: new Date("2026-07-02") },
     { description: "External monitor + laptop stand", amountCents: 89900, category: "HARDWARE" as const, merchant: "Best Buy", incurredAt: new Date("2026-06-18") },
-    { description: "Client site visit — taxi", amountCents: 15000, category: "TRAVEL" as const, merchant: "Uber", incurredAt: new Date("2026-06-10") },
+    { description: "Client site visit â€” taxi", amountCents: 15000, category: "TRAVEL" as const, merchant: "Uber", incurredAt: new Date("2026-06-10") },
     { description: "Team lunch after kickoff", amountCents: 8500, category: "MEALS" as const, merchant: "Local Bistro", incurredAt: new Date("2026-06-25") },
-    { description: "Accounting services — quarterly", amountCents: 50000, category: "SERVICES" as const, merchant: "ClearBooks", incurredAt: new Date("2026-05-28") },
+    { description: "Accounting services â€” quarterly", amountCents: 50000, category: "SERVICES" as const, merchant: "ClearBooks", incurredAt: new Date("2026-05-28") },
   ];
 
   await prisma.expense.deleteMany({
@@ -823,7 +824,7 @@ async function main() {
         {
           senderKind: "CLIENT",
           senderId: clientUser?.id,
-          body: "Thanks! We are excited — the design phase progress looks great so far.",
+          body: "Thanks! We are excited â€” the design phase progress looks great so far.",
         },
         {
           senderKind: "USER",
@@ -884,7 +885,7 @@ async function main() {
         entityId: demoExpenseForApproval.id,
         status: "PENDING",
         requestorId: admin?.id,
-        comment: "Annual hosting renewal — needs sign-off before paying.",
+        comment: "Annual hosting renewal â€” needs sign-off before paying.",
       },
       update: {},
     });
@@ -1027,6 +1028,70 @@ async function main() {
   ];
   for (const event of demoEvents) {
     await prisma.calendarEvent.create({ data: event });
+  }
+
+  console.log("Seeding demo shared files...");
+  const demoFileNames = [
+    "website-redesign-brief.txt",
+    "fleet-dashboard-notes.txt",
+    "brand-guidelines.txt",
+  ];
+  const existingFiles = await prisma.sharedFile.findMany({
+    where: { name: { in: demoFileNames } },
+    select: { id: true, storageKey: true },
+  });
+  for (const file of existingFiles) {
+    await prisma.sharedFile.delete({ where: { id: file.id } });
+    await removeStoredFile(file.storageKey);
+  }
+
+  const employeeUploader =
+    await prisma.user.findUnique({ where: { email: "employee@example.com" } });
+  const brandRefreshProject = projectsByName.get("Brand Refresh");
+  const demoFiles = [
+    {
+      name: "website-redesign-brief.txt",
+      content:
+        "Website Redesign â€” project brief\n\nScope: full site redesign for Acme Corporation.\n" +
+        "Target launch: end of Q3.\n\nStakeholders:\n- Acme marketing team\n- Shaan Studio delivery\n\nKey pages:\n- Homepage\n- Services\n- Case studies\n- Contact\n".repeat(2),
+      projectId: redesignProject ?? null,
+      clientId: daneClient?.id ?? null,
+      uploadedById: admin?.id,
+      mimeType: "text/plain",
+    },
+    {
+      name: "fleet-dashboard-notes.txt",
+      content:
+        "Fleet Dashboard â€” workshop notes\n\nDecisions from the 19 Aug workshop:\n- Metric tiles: uptime, fuel spend, trips\n- Alerts pushed to Slack\n- Export CSV per vehicle\n\nOpen questions:\n- Logo placement\n- Dark mode scope\n".repeat(2),
+      projectId: fleetProject ?? null,
+      clientId: null,
+      uploadedById: employeeUploader?.id ?? admin?.id,
+      mimeType: "text/plain",
+    },
+    {
+      name: "brand-guidelines.txt",
+      content:
+        "Brand Refresh â€” guidelines\n\nPrimary palette:\n- Ink #1B1B1F\n- Accent #6C5CE7\nTypography: Inter for web, Avenir for print.\n\nUsage rules:\n- Never stretch the logo\n- Minimum clear space = icon height\n".repeat(2),
+      projectId: brandRefreshProject ?? null,
+      clientId: null,
+      uploadedById: employeeUploader?.id ?? admin?.id,
+      mimeType: "text/plain",
+    },
+  ];
+  for (const file of demoFiles) {
+    const bytes = Buffer.from(file.content, "utf-8");
+    const storageKey = await saveUploadBytes(new Uint8Array(bytes));
+    await prisma.sharedFile.create({
+      data: {
+        name: file.name,
+        storageKey,
+        mimeType: file.mimeType,
+        size: bytes.length,
+        projectId: file.projectId,
+        clientId: file.clientId,
+        uploadedById: file.uploadedById,
+      },
+    });
   }
 
   console.log("Seed complete.");

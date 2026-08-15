@@ -30,6 +30,7 @@ describe("filterNavForUser", () => {
       "tasks.view",
       "time.view",
       "calendar.view",
+      "files.view",
       "messages.view",
       "approvals.view",
       "invoices.view",
@@ -100,6 +101,14 @@ describe("filterNavForUser", () => {
 
     const withCalendar = makeUser(["calendar.view"]);
     expect(labels(withCalendar)).toContain("Calendar");
+  });
+
+  it("shows files only with the files.view permission", () => {
+    const noFiles = makeUser(["tasks.view"]);
+    expect(labels(noFiles)).not.toContain("Files");
+
+    const withFiles = makeUser(["files.view"]);
+    expect(labels(withFiles)).toContain("Files");
   });
 
   it("shows approvals only with the approvals.view permission", () => {

@@ -85,6 +85,7 @@ Models live in `prisma/schema.prisma`. Current foundation tables:
 | `Approval` | One request per `(type, entityId)` for an invoice, expense or milestone, with requestor, decider and decision metadata |
 | `TimeEntry` | Hours logged by a team member on a given date, optionally linked to a task (minutes stored as whole minutes) |
 | `CalendarEvent` | Scheduled team event with start/end times, all-day flag, optional project/client links and creator |
+| `SharedFile` | Uploaded file stored on local disk (server-generated key, never the client filename), with optional project/client links and uploader |
 
 Enums: `UserKind` (`USER | CLIENT`), `UserStatus`
 (`ACTIVE | INVITED | SUSPENDED | INACTIVE`),

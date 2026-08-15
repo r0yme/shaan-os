@@ -20,6 +20,9 @@
 # production
 /build
 
+# uploaded file storage (local disk backend)
+/storage/
+
 # misc
 .DS_Store
 *.pem

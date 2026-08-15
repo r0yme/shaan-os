@@ -337,6 +337,24 @@ export const calendarEventSchema = z
   })
   .refine((value) => value.endsAt > value.startsAt, "End time must be after the start time.");
 
+export const MAX_SHARED_FILE_BYTES = 25 * 1024 * 1024;
+
+export const sharedFileMetadataSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Filename is required.")
+    .max(255, "Filename is too long."),
+  mimeType: optionalTextSchema(200, "MIME type"),
+  size: z
+    .number()
+    .int()
+    .nonnegative()
+    .max(MAX_SHARED_FILE_BYTES, "File exceeds the 25 MB upload limit."),
+  projectId: optionalIdSchema,
+  clientId: optionalIdSchema,
+});
+
 export function parseWithZod<T>(schema: z.ZodType<T>, data: unknown): T {
   const result = schema.safeParse(data);
   if (!result.success) {
