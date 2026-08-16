@@ -11,7 +11,7 @@ async function main() {
     throw new Error("DATABASE_URL is not set. Configure it before running this script.");
   }
 
-  const newPassword = process.env.ADMIN_RESET_PASSWORD ?? "Password123!";
+  const newPassword = process.env.ADMIN_RESET_PASSWORD ?? "Shaan2026!";
   const passwordHash = await hashPassword(newPassword);
 
   const adapter = new PrismaPg({ connectionString });
