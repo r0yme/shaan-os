@@ -11,11 +11,23 @@ import { verifyPassword } from "@/lib/password";
 import { logger } from "@/lib/logger";
 import { recordAudit } from "@/lib/audit";
 import { emailSchema, passwordSchema } from "@/lib/validation";
+import { rateLimit, clearRateLimit } from "@/lib/rate-limit";
+import { getLoginSecurity } from "@/lib/login-security";
 
 const credentialSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
 });
+
+function getClientIp(request?: Request): string {
+  if (!request) return "unknown";
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) {
+    const first = forwarded.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  return request.headers.get("x-real-ip") ?? "unknown";
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -31,12 +43,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(rawCredentials) {
+      async authorize(rawCredentials, request) {
         const parsed = credentialSchema.safeParse(rawCredentials);
         if (!parsed.success) {
           return null;
         }
         const { email, password } = parsed.data;
+        const ip = getClientIp(request);
+        const settings = await getLoginSecurity();
+
+        if (settings.rateLimitEnabled) {
+          const ipAllowed = rateLimit({
+            key: `login:ip:${ip}`,
+            limit: settings.ipAttemptLimit,
+            windowMs: settings.ipAttemptWindowMin * 60 * 1000,
+          });
+          if (!ipAllowed.success) {
+            return null;
+          }
+        }
 
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user?.passwordHash || user.deletedAt) {
@@ -45,12 +70,51 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (user.status === "SUSPENDED") {
           return null;
         }
-
-        const valid = await verifyPassword(password, user.passwordHash);
-        if (!valid) {
+        if (settings.lockoutEnabled && user.lockedUntil && user.lockedUntil > new Date()) {
           return null;
         }
 
+        const valid = await verifyPassword(password, user.passwordHash);
+        if (!valid) {
+          const emailIpKey = `login:email-ip:${email}:${ip}`;
+          if (settings.rateLimitEnabled) {
+            const failAllowed = rateLimit({
+              key: emailIpKey,
+              limit: settings.failLimitPerEmailIp,
+              windowMs: settings.failWindowMin * 60 * 1000,
+            });
+            if (!failAllowed.success) {
+              return null;
+            }
+          }
+          if (settings.lockoutEnabled) {
+            const failed = user.failedLoginCount + 1;
+            const shouldLock = failed >= settings.maxFailedLogins;
+            await prisma.user
+              .update({
+                where: { id: user.id },
+                data: {
+                  failedLoginCount: failed,
+                  ...(shouldLock
+                    ? { lockedUntil: new Date(Date.now() + settings.lockDurationMin * 60 * 1000) }
+                    : {}),
+                },
+              })
+              .catch((err) => logger.error({ err }, "Failed to record login attempt"));
+          }
+          await recordAudit({
+            actorId: user.id,
+            action: "LOGIN_FAILED",
+            entity: "User",
+            entityId: user.id,
+            summary: "Invalid credentials",
+          });
+          return null;
+        }
+
+        if (settings.rateLimitEnabled) {
+          clearRateLimit(`login:email-ip:${email}:${ip}`);
+        }
         return { id: user.id, email: user.email, name: user.name, image: user.image };
       },
     }),

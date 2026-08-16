@@ -2,18 +2,20 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/db";
 import { guardPermission } from "@/lib/page-guard";
 import { formatRelativeTime } from "@/lib/utils";
+import { getLoginSecurity } from "@/lib/login-security";
 import { AuditAction } from "@/generated/prisma/enums";
 import { PageHeading } from "@/components/page-heading";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SecurityManager, type SecurityUserRow } from "@/components/security/security-manager";
+import { LoginSecurityForm } from "@/components/security/login-security-form";
 
 export const metadata: Metadata = { title: "Security" };
 
 export default async function SecurityPage() {
   const me = await guardPermission("auth.manage");
 
-  const [users, recentActivity] = await Promise.all([
+  const [users, recentActivity, loginSecurity] = await Promise.all([
     prisma.user.findMany({
       where: { kind: "USER", deletedAt: null },
       select: {
@@ -35,6 +37,7 @@ export default async function SecurityPage() {
       orderBy: { createdAt: "desc" },
       select: { id: true, action: true, createdAt: true, summary: true },
     }),
+    getLoginSecurity(),
   ]);
 
   const rows: SecurityUserRow[] = users.map((user) => ({
@@ -56,6 +59,23 @@ export default async function SecurityPage() {
       </div>
 
       <SecurityManager rows={rows} />
+
+      <div className="mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Login security
+            </CardTitle>
+            <CardDescription>
+              Control account lockout and rate limiting for sign-in. Settings apply to everyone
+              immediately.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LoginSecurityForm initial={loginSecurity} />
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="mt-6">
         <Card>

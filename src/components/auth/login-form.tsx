@@ -31,9 +31,7 @@ export function LoginForm({
     try {
       const res = await signIn("credentials", { email, password, redirect: false });
       if (res?.error) {
-        setError(
-          "Invalid email or password. After several failed attempts the account is locked for 15 minutes.",
-        );
+        setError("Invalid email or password.");
         return;
       }
       router.push(target);

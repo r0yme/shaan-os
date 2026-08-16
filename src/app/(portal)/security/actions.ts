@@ -6,9 +6,10 @@ import { requirePermission } from "@/lib/session";
 import { recordAudit } from "@/lib/audit";
 import { hashPassword } from "@/lib/password";
 import { logger } from "@/lib/logger";
-import { parseWithZod, passwordSchema, idSchema } from "@/lib/validation";
+import { parseWithZod, passwordSchema, idSchema, loginSecuritySchema } from "@/lib/validation";
 import { AppError, NotFoundError } from "@/lib/errors";
 import { AuditAction } from "@/generated/prisma/enums";
+import { saveLoginSecurity, LOGIN_SECURITY_SETTING_KEY } from "@/lib/login-security";
 import type { ActionResult } from "@/lib/action-result";
 import { z } from "zod";
 
@@ -77,5 +78,26 @@ export async function forceSignOutAllAction(): Promise<ActionResult> {
     return { ok: true, id: "all-sessions" };
   } catch (error) {
     return errorResult(error, "forceSignOutAll");
+  }
+}
+
+export async function updateLoginSecurityAction(input: unknown): Promise<ActionResult> {
+  try {
+    const user = await requirePermission("auth.manage");
+    const data = parseWithZod(loginSecuritySchema, input);
+
+    await saveLoginSecurity(data, user.id);
+
+    await recordAudit({
+      actorId: user.id,
+      action: AuditAction.SETTINGS_CHANGE,
+      entity: "Setting",
+      entityId: LOGIN_SECURITY_SETTING_KEY,
+      summary: `Login security updated (lockout ${data.lockoutEnabled ? "on" : "off"}, rate limiting ${data.rateLimitEnabled ? "on" : "off"})`,
+    });
+    revalidatePath("/security");
+    return { ok: true, id: LOGIN_SECURITY_SETTING_KEY };
+  } catch (error) {
+    return errorResult(error, "updateLoginSecurity");
   }
 }

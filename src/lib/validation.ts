@@ -438,6 +438,19 @@ export const aiLeadScoreSchema = z.object({
   leadId: idSchema,
 });
 
+export const loginSecuritySchema = z.object({
+  lockoutEnabled: z.boolean(),
+  maxFailedLogins: z.number().int().min(3).max(20),
+  lockDurationMin: z.number().int().min(1).max(1440),
+  rateLimitEnabled: z.boolean(),
+  ipAttemptLimit: z.number().int().min(5).max(200),
+  ipAttemptWindowMin: z.number().int().min(1).max(1440),
+  failLimitPerEmailIp: z.number().int().min(1).max(10),
+  failWindowMin: z.number().int().min(1).max(1440),
+});
+
+export type LoginSecuritySettings = z.infer<typeof loginSecuritySchema>;
+
 export const leadScoreResultSchema = z.object({
   score: z.number().int().min(0).max(100),
   summary: z.string().min(1),
